@@ -1,13 +1,12 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 const Register = () => {
   const { registerUser, googleLogin } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -18,7 +17,6 @@ const Register = () => {
     const password = e.target.password.value;
     const photoURL = e.target.photoURL.value;
 
-    // Password validation
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters!");
       setLoading(false);
@@ -28,7 +26,6 @@ const Register = () => {
     try {
       await registerUser(email, password, name, photoURL);
       toast.success("Registration successful!");
-      navigate("/dashboard");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -39,9 +36,8 @@ const Register = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      await googleLogin();
-      toast.success("Login successful!");
-      navigate("/dashboard");
+      await googleLogin(); // redirect login
+      toast.success("Redirecting to Google login...");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -51,9 +47,7 @@ const Register = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 p-4 relative">
-      
-
-      <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md backdrop-blur-md relative">
+      <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md relative">
         {loading && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-2xl">
             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -72,7 +66,7 @@ const Register = () => {
               name="name"
               required
               placeholder="John Doe"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -83,7 +77,7 @@ const Register = () => {
               name="email"
               required
               placeholder="example@gmail.com"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -94,7 +88,7 @@ const Register = () => {
               name="password"
               required
               placeholder="********"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -104,7 +98,7 @@ const Register = () => {
               type="text"
               name="photoURL"
               placeholder="https://example.com/photo.jpg"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 

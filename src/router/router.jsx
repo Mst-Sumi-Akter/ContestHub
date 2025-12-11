@@ -10,49 +10,35 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "../router/ProtectedRoute";
-
+import Leaderboard from "../components/Leaderboard";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <MainLayout />,   // Layout with navbar + footer
+    element: <MainLayout />,
     children: [
-      {
-        path: "/",
-        element: <Home />,
-      },
-      {
-        path: "/all-contests",
-        element: <AllContests />,
-      },
+      { path: "/", element: <Home /> },
+      { path: "/all-contests", element: <AllContests /> },
       {
         path: "/contest/:id",
-        element: <ContestDetails />,
+        element: (
+          <ProtectedRoute>
+            <ContestDetails />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/dashboard",
-        element: <Dashboard />,
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
       },
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
-        path: "*",
-        element: <NotFound />,
-      },
-      {
-  path: "/dashboard",
-  element: (
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  ),
-}
+      { path: "/leaderboard", element: <Leaderboard /> },
+      { path: "/login", element: <Login /> },
+      { path: "/register", element: <Register /> },
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);

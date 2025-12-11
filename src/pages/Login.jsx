@@ -1,13 +1,18 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
 
 const Login = () => {
   const { loginUser, googleLogin } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // If user came from a protected page, redirect there after login
+  const from = location.state?.from?.pathname || "/";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,7 +24,7 @@ const Login = () => {
     try {
       await loginUser(email, password);
       toast.success("Login successful!");
-      navigate("/dashboard");
+      navigate(from, { replace: true }); // Redirect to original page
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -31,8 +36,8 @@ const Login = () => {
     setLoading(true);
     try {
       await googleLogin();
-      toast.success("Login successful!");
-      navigate("/");
+      toast.success("Redirecting to Google login...");
+      navigate(from, { replace: true }); // Redirect after Google login
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -42,7 +47,7 @@ const Login = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 p-4 relative">
-      <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md backdrop-blur-md relative">
+      <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md relative">
         {loading && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-2xl">
             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -61,7 +66,7 @@ const Login = () => {
               name="email"
               required
               placeholder="example@gmail.com"
-              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -72,14 +77,14 @@ const Login = () => {
               name="password"
               required
               placeholder="********"
-              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold"
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 transition disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
@@ -94,17 +99,15 @@ const Login = () => {
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-lg font-semibold hover:bg-indigo-50"
+          className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          <div className="flex justify-center items-center gap-2">
-            <FcGoogle size={22} />
-            Continue with Google
-          </div>
+          <FcGoogle size={22} />
+          Continue with Google
         </button>
 
         <p className="text-center text-sm mt-4 text-gray-700 dark:text-gray-300">
-          Don’t have an account?
-          <Link to="/register" className="text-indigo-600 font-semibold ml-1">
+          Don’t have an account?{" "}
+          <Link to="/register" className="text-indigo-600 font-semibold hover:underline">
             Register
           </Link>
         </p>
