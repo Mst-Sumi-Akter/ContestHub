@@ -1,72 +1,70 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext";
-import { motion } from "framer-motion";
+import bannerImg from "../assets/360_F_280016453_VkNxKbvtljZxNWa3Y4A41BB6gEp1DIjY.jpg";
 
 const Banner = () => {
   const { theme } = useContext(ThemeContext);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
+  const handleSearch = () => {
+    if (search.trim() !== "") {
+      navigate(`/all-contests?type=${search}`);
+    }
+  };
+
   return (
-    <section className="relative bg-gradient-to-r from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 py-20 sm:py-28 lg:py-32 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+    <section
+      className="relative w-full h-[85vh] flex items-center justify-center"
+      style={{
+        backgroundImage: `url(${bannerImg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40 dark:from-black/80"></div>
 
-        {/* Left Content */}
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1 }}
+      <div className="relative z-10 text-center px-5 max-w-3xl">
+        
+        {/* Heading */}
+        <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg mb-4">
+          Discover Creative Contests
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-lg md:text-xl text-gray-200 mb-10 leading-relaxed">
+          Join exciting contests, showcase your skills, and win amazing rewards!
+        </p>
+
+        {/* Search Box Container */}
+        <div className="backdrop-blur-md bg-white/20 dark:bg-black/30 p-4 rounded-xl shadow-xl flex flex-col sm:flex-row justify-center items-center gap-3">
+
+          <input
+            type="text"
+            placeholder="Search contest type (e.g. Design, Writing)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-4 py-3 w-full sm:w-80 rounded-lg outline-none bg-white/90 dark:bg-gray-800 dark:text-white"
+          />
+
+          <button
+            onClick={handleSearch}
+            className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-md"
+          >
+            Search
+          </button>
+
+        </div>
+
+        {/* CTA Button */}
+        <button
+          onClick={() => navigate("/all-contests")}
+          className="mt-8 px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-semibold rounded-full shadow-lg hover:opacity-90 transition"
         >
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight">
-            Showcase Your <span className="text-blue-600">Creativity</span>
-          </h1>
-          <p className="mt-4 text-lg sm:text-xl text-gray-700 dark:text-gray-300 max-w-lg">
-            Join contests, submit your best works, and win amazing prizes. Connect with creators worldwide.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="mt-6 flex flex-wrap gap-4">
-            <button
-              onClick={() => navigate("/all-contests")}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-            >
-              Browse Contests
-            </button>
-            <button
-              onClick={() => navigate("/login")}
-              className="px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition"
-            >
-              Create Contest
-            </button>
-          </div>
-        </motion.div>
-
-        {/* Right Content */}
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1 }}
-          className="flex justify-center lg:justify-end"
-        >
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="h-48 bg-gradient-to-tr from-blue-200 to-blue-400 rounded-lg mb-4 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">Logo Design Contest</span>
-            </div>
-            <h3 className="text-lg font-semibold dark:text-white">Win $500 for Best Logo</h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-              Submit your creative logo and compete with talented designers. Deadline: <strong>Dec 31, 2025</strong>
-            </p>
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-sm text-gray-500 dark:text-gray-300">
-                Participants: <strong>58</strong>
-              </div>
-              <button className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 transition">
-                View Details
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
+          Explore All Contests
+        </button>
       </div>
     </section>
   );

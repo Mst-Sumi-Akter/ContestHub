@@ -9,6 +9,8 @@ import Dashboard from "../pages/Dashboard";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
+import ProtectedRoute from "../router/ProtectedRoute";
+
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +45,14 @@ export const router = createBrowserRouter([
         path: "*",
         element: <NotFound />,
       },
+      {
+  path: "/dashboard",
+  element: (
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  ),
+}
     ],
   },
 ]);

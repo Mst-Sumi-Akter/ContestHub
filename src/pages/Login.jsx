@@ -1,46 +1,67 @@
-// src/pages/Login.jsx
 import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import { FcGoogle } from "react-icons/fc";
+import toast from "react-hot-toast";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { loginUser, googleLogin } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleSubmit = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Mock login - replace with your backend/auth logic
-    const mockUser = {
-      displayName: "John Doe",
-      email,
-      photoURL: "https://i.pravatar.cc/150?img=3",
-    };
+    const email = e.target.email.value;
+    const password = e.target.password.value;
 
-    login(mockUser);
-    navigate("/dashboard");
+    try {
+      await loginUser(email, password);
+      toast.success("Login successful!");
+      navigate("/dashboard");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      await googleLogin();
+      toast.success("Login successful!");
+      navigate("/");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-400 to-purple-500">
-      <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-10 w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-6">
-          Welcome Back
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 p-4 relative">
+      <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md backdrop-blur-md relative">
+        {loading && (
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-2xl">
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        <h2 className="text-4xl font-extrabold text-center mb-6 text-indigo-600">
+          Login
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-gray-700 dark:text-gray-200 mb-1">Email</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
               required
-              placeholder="you@example.com"
-              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="example@gmail.com"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white"
             />
           </div>
 
@@ -48,31 +69,45 @@ const Login = () => {
             <label className="block text-gray-700 dark:text-gray-200 mb-1">Password</label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
               required
               placeholder="********"
-              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-600 transition"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-gray-600 dark:text-gray-300">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="text-blue-500 font-semibold hover:underline"
-          >
+        <div className="my-6 flex items-center">
+          <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600"></div>
+          <p className="px-3 text-gray-500 dark:text-gray-300 text-sm">OR</p>
+          <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600"></div>
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-lg font-semibold hover:bg-indigo-50"
+        >
+          <div className="flex justify-center items-center gap-2">
+            <FcGoogle size={22} />
+            Continue with Google
+          </div>
+        </button>
+
+        <p className="text-center text-sm mt-4 text-gray-700 dark:text-gray-300">
+          Don’t have an account?
+          <Link to="/register" className="text-indigo-600 font-semibold ml-1">
             Register
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   );
