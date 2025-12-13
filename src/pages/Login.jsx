@@ -1,54 +1,70 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
 
 const Login = () => {
-  const { loginUser, googleLogin } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
+  const { loginUser, googleLogin, user, loading } = useContext(AuthContext);
+  const [formLoading, setFormLoading] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  // If user came from a protected page, redirect there after login
   const from = location.state?.from?.pathname || "/";
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, from, navigate]);
+
+  // ---------------- Handle Backend Email/Password Login ----------------
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setFormLoading(true);
 
     const email = e.target.email.value;
     const password = e.target.password.value;
 
     try {
-      await loginUser(email, password);
+      await loginUser(email, password); // sets user & token in context
       toast.success("Login successful!");
-      navigate(from, { replace: true }); // Redirect to original page
+      navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.response?.data?.message || err.message || "Login failed");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
+  // ---------------- Handle Google Login ----------------
   const handleGoogleLogin = async () => {
-    setLoading(true);
+    setFormLoading(true);
     try {
-      await googleLogin();
-      toast.success("Redirecting to Google login...");
-      navigate(from, { replace: true }); // Redirect after Google login
+      await googleLogin(); // sets user & token in context
+      toast.success("Google login successful!");
+      navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Google login failed");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
+
+  // Show loading spinner if AuthContext is still loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 p-4 relative">
       <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md relative">
-        {loading && (
+        {formLoading && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-2xl">
             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
@@ -83,10 +99,10 @@ const Login = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={formLoading}
             className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Login"}
+            {formLoading ? "Logging in..." : "Login"}
           </button>
         </form>
 
@@ -98,7 +114,7 @@ const Login = () => {
 
         <button
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={formLoading}
           className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <FcGoogle size={22} />

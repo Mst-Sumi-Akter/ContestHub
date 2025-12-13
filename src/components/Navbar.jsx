@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { ThemeContext } from "../context/ThemeContext"; // ✅ works now
+import { ThemeContext } from "../context/ThemeContext"; 
 import { AuthContext } from "../context/AuthContext";
 import { BiSun, BiMoon, BiMenu, BiX } from "react-icons/bi";
 import { Link, NavLink } from "react-router-dom";

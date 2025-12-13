@@ -1,16 +1,27 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
 
 const Register = () => {
-  const { registerUser, googleLogin } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
+  const { googleLogin, user, loading } = useContext(AuthContext);
+  const [formLoading, setFormLoading] = useState(false);
+  const [role, setRole] = useState("user"); // default role
 
+  const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/"); // redirect to home if logged in
+    }
+  }, [user, loading, navigate]);
+
+  // ---------------- Backend Registration ----------------
   const handleRegister = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setFormLoading(true);
 
     const name = e.target.name.value;
     const email = e.target.email.value;
@@ -19,36 +30,59 @@ const Register = () => {
 
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters!");
-      setLoading(false);
+      setFormLoading(false);
       return;
     }
 
     try {
-      await registerUser(email, password, name, photoURL);
+      // Call AuthContext registerUser if implemented
+      // Or call backend directly
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role, photoURL }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Registration failed");
+
+      localStorage.setItem("authToken", data.token); // save token
       toast.success("Registration successful!");
+      navigate("/"); // redirect to home
     } catch (err) {
       toast.error(err.message);
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
+  // ---------------- Google Login/Signup ----------------
   const handleGoogleLogin = async () => {
-    setLoading(true);
+    setFormLoading(true);
     try {
-      await googleLogin(); // redirect login
-      toast.success("Redirecting to Google login...");
+      await googleLogin(); // sets user & token in context
+      toast.success("Google login successful!");
+      navigate("/"); // redirect after login
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Google login failed");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
+
+  // Show loading spinner if AuthContext is still loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200 p-4 relative">
       <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-10 w-full max-w-md relative">
-        {loading && (
+        {formLoading && (
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-2xl">
             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
@@ -102,12 +136,24 @@ const Register = () => {
             />
           </div>
 
+          <div>
+            <label className="block text-gray-700 dark:text-gray-200 mb-1">Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="user">User</option>
+              <option value="creator">Creator</option>
+            </select>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={formLoading}
             className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            {loading ? "Registering..." : "Register"}
+            {formLoading ? "Registering..." : "Register"}
           </button>
         </form>
 
@@ -119,7 +165,7 @@ const Register = () => {
 
         <button
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={formLoading}
           className="w-full mt-4 border border-indigo-600 text-indigo-600 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <FcGoogle size={22} />

@@ -1,93 +1,93 @@
-import { createContext, useState, useEffect } from "react";
-import { auth } from "../firebase/firebase"; 
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  onAuthStateChanged,
-  signOut,
-} from "firebase/auth";
+import { createContext, useEffect, useState } from "react";
+import axios from "axios";
+import { auth } from "../firebase/firebase";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export const AuthContext = createContext();
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const googleProvider = new GoogleAuthProvider();
 
-  // Google Login
-  const googleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      setUser(result.user);
-      return result.user;
-    } catch (error) {
-      console.error("Google Login Error:", error);
-      throw error;
-    }
-  };
-
-  // Email/Password Registration
-  const registerUser = async (email, password, displayName, photoURL) => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(result.user, { displayName, photoURL });
-      setUser(auth.currentUser);
-      return auth.currentUser;
-    } catch (error) {
-      console.error("Registration Error:", error);
-      throw error;
-    }
-  };
-
   // Email/Password Login
   const loginUser = async (email, password) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      setUser(result.user);
-      return result.user;
-    } catch (error) {
-      console.error("Login Error:", error);
-      throw error;
-    }
+    const res = await axios.post(`${API_URL}/auth/login`, { email, password });
+    setUser(res.data);
+    setToken(res.data.token);
+    localStorage.setItem("authToken", res.data.token);
+    return res.data;
   };
 
-  // Logout
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      console.error("Logout Error:", error);
-    }
+  // Registration
+  const registerUser = async (data) => {
+    const res = await axios.post(`${API_URL}/auth/register`, data);
+    setUser(res.data);
+    setToken(res.data.token);
+    localStorage.setItem("authToken", res.data.token);
+    return res.data;
   };
 
-  // Track Logged-in User (Firebase)
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+  // Google Login
+  const googleLogin = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    const { email, displayName, photoURL } = result.user;
+
+    const res = await axios.post(`${API_URL}/auth/google-login`, {
+      email,
+      name: displayName,
+      photoURL,
     });
-    return () => unsubscribe();
+
+    setUser(res.data);
+    setToken(res.data.token);
+    localStorage.setItem("authToken", res.data.token);
+    return res.data;
+  };
+
+  
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    axios
+      .get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setUser(res.data);
+        setToken(token);
+      })
+      .catch(() => localStorage.removeItem("authToken"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const authInfo = {
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("authToken");
+  };
+
+  const value = {
     user,
+    token,
     loading,
     loginUser,
     registerUser,
     googleLogin,
     logout,
+    isAdmin: user?.role === "admin",
+    isCreator: user?.role === "creator",
   };
 
-  return (
-    <AuthContext.Provider value={authInfo}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthProvider;

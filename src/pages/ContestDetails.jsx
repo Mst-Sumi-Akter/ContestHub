@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 
 // Countdown helper
 const calculateTimeLeft = (endDate) => {
+  if (!endDate) return null;
   const difference = new Date(endDate) - new Date();
   if (difference <= 0) return null;
 
@@ -16,8 +17,8 @@ const calculateTimeLeft = (endDate) => {
 };
 
 const ContestDetails = () => {
-  const { user, loading: authLoading } = useContext(AuthContext);
-  const { id } = useParams();
+  const { user, loading: authLoading, token } = useContext(AuthContext);
+  const { id } = useParams(); // MongoDB _id
   const navigate = useNavigate();
 
   const [contest, setContest] = useState(null);
@@ -28,25 +29,42 @@ const ContestDetails = () => {
   const [submission, setSubmission] = useState("");
   const [registered, setRegistered] = useState(false);
 
-  // Redirect if user is not logged in
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login", { state: { from: `/contest/${id}` } });
     }
-  }, [user, authLoading, navigate, id]);
+  }, [authLoading, user, navigate, id]);
 
-  // Fetch contest data after auth is confirmed
+  // Fetch contest data
   useEffect(() => {
-    if (!user || authLoading) return;
+    if (!user || authLoading || !token) return;
 
     const fetchContest = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/contests/${id}`);
+        const res = await fetch(`${API_URL}/contests/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, 
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch contest");
+
         const data = await res.json();
+
+        //  Ensure participants is always an array
+        if (!Array.isArray(data.participants)) data.participants = [];
+
         setContest(data);
         setTimeLeft(calculateTimeLeft(data.endDate));
+
+        // Check if user already registered
+        const isRegistered = data.participants.includes(user.email);
+        setRegistered(isRegistered);
+
         setError(null);
       } catch (err) {
         setError(err.message || "Something went wrong");
@@ -56,48 +74,71 @@ const ContestDetails = () => {
     };
 
     fetchContest();
-  }, [id, user, authLoading]);
+  }, [id, user, authLoading, API_URL, token]);
 
   // Countdown timer
   useEffect(() => {
     if (!contest) return;
     const timer = setInterval(() => {
-      const newTimeLeft = calculateTimeLeft(contest.endDate);
-      setTimeLeft(newTimeLeft);
+      setTimeLeft(calculateTimeLeft(contest.endDate));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [contest]);
 
+  // Register for contest
   const handleRegister = async () => {
     try {
-      await fetch(`http://localhost:5000/contests/${id}/register`, {
+      const res = await fetch(`${API_URL}/contests/${id}/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+
       setRegistered(true);
       setContest({
         ...contest,
-        participants: (contest.participants || 0) + 1,
+        participants: [...contest.participants, user.email],
       });
     } catch (err) {
-      alert("Registration failed: " + err.message);
+      alert(err.message);
     }
   };
 
+  // Submit task
   const handleSubmitTask = async () => {
+    if (!submission.trim()) {
+      alert("Submission cannot be empty");
+      return;
+    }
+
     try {
-      await fetch(`http://localhost:5000/contests/${id}/submit-task`, {
+      const res = await fetch(`${API_URL}/contests/${id}/submit-task`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid, submission }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ submission }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Submission failed");
+      }
+
       alert("Task submitted successfully!");
       setShowSubmitModal(false);
       setSubmission("");
     } catch (err) {
-      alert("Submission failed: " + err.message);
+      alert(err.message);
     }
   };
 
@@ -129,45 +170,41 @@ const ContestDetails = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-      {/* Banner */}
       <img
         src={contest.image || "https://via.placeholder.com/800x400?text=Contest"}
         alt={contest.title}
         className="w-full h-64 object-cover rounded-lg mb-6"
       />
 
-      {/* Title */}
       <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
         {contest.title}
       </h1>
 
-      {/* Participants & Prize */}
       <div className="flex justify-between mb-4">
         <p>
-          <strong>Participants:</strong> {contest.participants || 0}
+          <strong>Participants:</strong> {contest.participants.length}
         </p>
         <p>
           <strong>Prize:</strong> {contest.reward || "—"}
         </p>
       </div>
 
-      {/* Countdown */}
       <p className="mb-4 text-red-600 font-semibold">
         {ended
           ? "Contest Ended"
-          : `Time Left: ${timeLeft.days || 0}d ${timeLeft.hours || 0}h ${timeLeft.minutes || 0}m ${timeLeft.seconds || 0}s`}
+          : `Time Left: ${timeLeft.days || 0}d ${timeLeft.hours || 0}h ${
+              timeLeft.minutes || 0
+            }m ${timeLeft.seconds || 0}s`}
       </p>
 
-      {/* Full Description */}
       <p className="text-gray-700 dark:text-gray-300 mb-6">{contest.description}</p>
 
-      {/* Winner info */}
       {contest.winner && (
         <div className="mb-6">
           <h2 className="font-semibold text-lg mb-2">Winner</h2>
           <div className="flex items-center gap-4">
             <img
-              src={contest.winner.photo}
+              src={contest.winner.photo || "https://via.placeholder.com/64"}
               alt={contest.winner.name}
               className="w-16 h-16 rounded-full"
             />
@@ -176,7 +213,6 @@ const ContestDetails = () => {
         </div>
       )}
 
-      {/* Register / Submit */}
       {!ended && (
         <div className="flex gap-4 mb-6">
           <button
@@ -200,7 +236,6 @@ const ContestDetails = () => {
         </div>
       )}
 
-      {/* Submit Modal */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">

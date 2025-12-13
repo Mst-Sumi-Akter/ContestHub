@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const ContestCard = ({ contest }) => {
   return (
@@ -24,12 +25,16 @@ const ContestCard = ({ contest }) => {
         </p>
 
         <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-          Starts: {contest.startDate?.slice(0, 10)}
+          Starts: {contest.startDate ? contest.startDate.slice(0, 10) : "N/A"}
         </p>
 
-        <button className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">
+        {/* Link to Contest Details */}
+        <Link
+          to={`/contest/${contest._id}`} 
+          className="w-full block text-center bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
+        >
           View Contest
-        </button>
+        </Link>
       </div>
     </div>
   );
