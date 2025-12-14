@@ -61,7 +61,7 @@ const Banner = () => {
         {/* CTA Button */}
         <button
           onClick={() => navigate("/all-contests")}
-          className="mt-8 px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-semibold rounded-full shadow-lg hover:opacity-90 transition"
+          className="mt-8 px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-semibold rounded-xl shadow-lg hover:opacity-90 transition"
         >
           Explore All Contests
         </button>

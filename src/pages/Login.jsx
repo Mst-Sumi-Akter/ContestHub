@@ -10,7 +10,9 @@ const Login = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+
+  // Support redirect to original page
+  const from = location.state?.from || "/";
 
   // Redirect if already logged in
   useEffect(() => {
@@ -30,7 +32,7 @@ const Login = () => {
     try {
       await loginUser(email, password); // sets user & token in context
       toast.success("Login successful!");
-      navigate(from, { replace: true });
+      navigate(from, { replace: true }); // Redirect after login
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || "Login failed");
     } finally {
@@ -44,7 +46,7 @@ const Login = () => {
     try {
       await googleLogin(); // sets user & token in context
       toast.success("Google login successful!");
-      navigate(from, { replace: true });
+      navigate(from, { replace: true }); // Redirect after login
     } catch (err) {
       toast.error(err.message || "Google login failed");
     } finally {
