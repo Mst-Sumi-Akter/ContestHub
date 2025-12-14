@@ -5,6 +5,7 @@ import Banner from '../components/Banner';
 import PopularContests from '../components/PopularContests';
 import WinnerAdvertisement from '../components/WinnerAdvertisement';
 import Reviews from '../components/Reviews';
+import FAQ from '../components/FAQ';
 
 
 const Home = () => {
@@ -14,6 +15,7 @@ const Home = () => {
           <PopularContests></PopularContests>
           <WinnerAdvertisement></WinnerAdvertisement>
           <Reviews></Reviews>
+          <FAQ></FAQ>
 
         </div>
     );

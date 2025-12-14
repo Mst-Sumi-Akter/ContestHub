@@ -29,7 +29,7 @@ const WinnerAdvertisement = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 pb-10">
       {/* Header */}
-      <div className="text-center mb-10">
+      <div className="text-center mb-20">
         <h2 className="text-3xl font-bold text-indigo-700 mb-2">
           🌟 Our Recent Champions
         </h2>

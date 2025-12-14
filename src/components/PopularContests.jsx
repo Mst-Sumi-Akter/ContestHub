@@ -39,8 +39,8 @@ const PopularContests = ({ isLoggedIn }) => {
     text && text.length > n ? text.slice(0, n) + "..." : text;
 
   return (
-    <div className="popular-contests p-10 max-w-7xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-10 text-center">
+    <div className="popular-contests p-20 max-w-7xl mx-auto">
+      <h2 className=" mb-20 text-3xl font-bold text-indigo-700  text-center">
         🔥 Popular Contests
       </h2>
 
