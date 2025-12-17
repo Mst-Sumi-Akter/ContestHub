@@ -12,6 +12,9 @@ const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ New state for contest stats update
+  const [contestStatsUpdated, setContestStatsUpdated] = useState(false);
+
   const googleProvider = new GoogleAuthProvider();
 
   // Login
@@ -77,7 +80,7 @@ const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    setUser, // ✅ VERY IMPORTANT FIX
+    setUser,
     token,
     loading,
     loginUser,
@@ -86,6 +89,10 @@ const AuthProvider = ({ children }) => {
     logout,
     isAdmin: user?.role === "admin",
     isCreator: user?.role === "creator",
+
+    // ✅ provide contestStatsUpdated
+    contestStatsUpdated,
+    setContestStatsUpdated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

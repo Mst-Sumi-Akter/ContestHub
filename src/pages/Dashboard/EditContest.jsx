@@ -18,7 +18,7 @@ const EditContest = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // Fetch contest data
+  // ================= FETCH CONTEST =================
   useEffect(() => {
     if (!id || !token) return;
 
@@ -27,10 +27,16 @@ const EditContest = () => {
         const res = await axios.get(`${API_URL}/contests/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // Only creator can edit
+        if (res.data.creatorEmail !== user.email) {
+          toast.error("You are not allowed to edit this contest");
+          return navigate("/dashboard/my-created");
+        }
+
         setContest(res.data);
         if (res.data.endDate) setDeadline(new Date(res.data.endDate));
       } catch (err) {
-        console.error(err);
         toast.error("Failed to load contest data");
       } finally {
         setLoading(false);
@@ -38,20 +44,20 @@ const EditContest = () => {
     };
 
     fetchContest();
-  }, [id, token]);
+  }, [id, token, user, navigate]);
 
+  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
-      setContest((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setContest((prev) => ({ ...prev, [name]: value }));
-    }
+    setContest((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!token) return;
 
     try {
       setUpdating(true);
@@ -60,10 +66,9 @@ const EditContest = () => {
         { ...contest, endDate: deadline },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Contest updated successfully!");
-      navigate("/dashboard/my-contests");
+      toast.success("Contest updated successfully");
+      navigate("/dashboard/my-created");
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.message || "Update failed");
     } finally {
       setUpdating(false);
@@ -71,44 +76,37 @@ const EditContest = () => {
   };
 
   if (loading)
-    return <p className="text-center mt-10 text-gray-500">Loading contest...</p>;
+    return <p className="text-center mt-10">Loading contest...</p>;
 
   if (!contest)
     return <p className="text-center mt-10 text-red-500">Contest not found</p>;
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
-      <h1 className="text-4xl font-extrabold mb-8 text-center text-gray-800 dark:text-gray-100">
-        Edit Contest
-      </h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Edit Contest</h1>
 
       <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-6">
-        {/* Contest Name */}
-        <div className="flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Contest Name *
-          </label>
+        {/* Title */}
+        <div>
+          <label>Contest Title *</label>
           <input
-            name="name"
-            value={contest.name || ""}
+            name="title"
+            value={contest.title || ""}
             onChange={handleChange}
-            placeholder="UI Design Challenge"
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            className="input"
           />
         </div>
 
-        {/* Contest Type */}
-        <div className="flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Contest Type *
-          </label>
+        {/* Category */}
+        <div>
+          <label>Category *</label>
           <select
-            name="contestType"
-            value={contest.contestType || ""}
+            name="category"
+            value={contest.category || ""}
             onChange={handleChange}
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            className="input"
           >
-            <option value="">Select Type</option>
+            <option value="">Select</option>
             <option value="Design">Design</option>
             <option value="Development">Development</option>
             <option value="Photography">Photography</option>
@@ -117,120 +115,98 @@ const EditContest = () => {
           </select>
         </div>
 
-        {/* Image URL */}
-        <div className="flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Image URL *
-          </label>
+        {/* Image */}
+        <div>
+          <label>Image URL *</label>
           <input
             name="image"
             value={contest.image || ""}
             onChange={handleChange}
-            placeholder="https://example.com/image.jpg"
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            className="input"
           />
         </div>
 
-        {/* Image Preview */}
-        <div className="flex items-center justify-center border-2 border-dashed rounded-lg p-2 bg-gray-50 dark:bg-gray-800">
-          {contest.image ? (
-            <img src={contest.image} alt="Preview" className="h-36 object-cover rounded-md" />
-          ) : (
-            <p className="text-gray-400 dark:text-gray-500">Image Preview</p>
+        {/* Preview */}
+        <div className="flex justify-center items-center border rounded">
+          {contest.image && (
+            <img src={contest.image} alt="preview" className="h-32 rounded" />
           )}
         </div>
 
         {/* Price */}
-        <div className="flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Participation Price *
-          </label>
+        <div>
+          <label>Price *</label>
           <input
-            name="price"
             type="number"
+            name="price"
             value={contest.price || 0}
             onChange={handleChange}
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            className="input"
           />
         </div>
 
-        {/* Prize Money */}
-        <div className="flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Prize Money *
-          </label>
+        {/* Prize */}
+        <div>
+          <label>Prize Money *</label>
           <input
-            name="prizeMoney"
             type="number"
+            name="prizeMoney"
             value={contest.prizeMoney || 0}
             onChange={handleChange}
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            className="input"
           />
         </div>
 
         {/* End Date */}
-        <div className="flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            End Date *
-          </label>
+        <div>
+          <label>End Date *</label>
           <DatePicker
             selected={deadline}
-            onChange={(date) => setDeadline(date)}
+            onChange={setDeadline}
             minDate={new Date()}
-            className="input w-full shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            className="input w-full"
           />
         </div>
 
-        {/* Is Active */}
-        <div className="flex flex-col justify-center">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Is Active
-          </label>
+        {/* Active */}
+        <div className="flex items-center gap-2">
           <input
             type="checkbox"
             name="isActive"
             checked={contest.isActive || false}
             onChange={handleChange}
-            className="h-5 w-5 accent-indigo-500"
           />
+          <label>Is Active</label>
         </div>
 
         {/* Description */}
-        <div className="md:col-span-2 flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Description *
-          </label>
+        <div className="md:col-span-2">
+          <label>Description *</label>
           <textarea
             name="description"
             value={contest.description || ""}
             onChange={handleChange}
-            rows="3"
-            placeholder="Short contest overview"
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            rows={3}
+            className="input"
           />
         </div>
 
-        {/* Task Instruction */}
-        <div className="md:col-span-2 flex flex-col">
-          <label className="font-medium text-gray-700 dark:text-gray-200 mb-1">
-            Task Instruction *
-          </label>
+        {/* Task */}
+        <div className="md:col-span-2">
+          <label>Task Instruction *</label>
           <textarea
             name="taskInstruction"
             value={contest.taskInstruction || ""}
             onChange={handleChange}
-            rows="4"
-            placeholder="What participants need to submit"
-            className="input shadow-sm border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100"
+            rows={4}
+            className="input"
           />
         </div>
 
-        {/* Submit Button */}
         <div className="md:col-span-2 text-right">
           <button
-            type="submit"
             disabled={updating}
-            className="px-10 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-md transition duration-300 disabled:opacity-50"
+            className="px-8 py-3 bg-indigo-600 text-white rounded"
           >
             {updating ? "Updating..." : "Update Contest"}
           </button>

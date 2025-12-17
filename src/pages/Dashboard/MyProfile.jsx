@@ -8,111 +8,99 @@ import logo from "../../assets/logo.jpg";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const MyProfile = () => {
-  const auth = useContext(AuthContext);
-
-  const user = auth?.user;
-  const token = auth?.token;
-  const setUser = auth?.setUser;
+  const { user, token, setUser, contestStatsUpdated, setContestStatsUpdated } = useContext(AuthContext);
 
   const [name, setName] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [bio, setBio] = useState("");
+  const [role, setRole] = useState("");
   const [participated, setParticipated] = useState(0);
   const [won, setWon] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  /* ================= FETCH PROFILE ================= */
-  useEffect(() => {
+  // Fetch profile
+  const fetchProfile = async () => {
     if (!token) {
       setLoading(false);
       return;
     }
 
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    try {
+      const res = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data || {};
+      setName(data.name || "");
+      setPhotoURL(data.photoURL || "");
+      setBio(data.bio || "");
+      setRole(data.role || "User");
 
-        const data = res.data || {};
-        setName(data.name || "");
-        setPhotoURL(data.photoURL || "");
-        setBio(data.bio || "");
+      if (setUser) setUser((prev) => ({ ...prev, ...data }));
+    } catch (err) {
+      console.error("Profile fetch error:", err?.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (typeof setUser === "function") {
-          setUser((prev) => ({ ...prev, ...data }));
-        }
-      } catch (err) {
-        console.error("Profile fetch error:", err?.response?.data || err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchProfile();
   }, [token]);
 
-  /* ================= FETCH CONTEST DATA ================= */
-  useEffect(() => {
+  // Fetch contest stats
+  const fetchContests = async () => {
     if (!token || !user?.email) return;
 
-    const fetchContests = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/contests`);
-        const contests = res.data || [];
+    try {
+      const res = await axios.get(`${API_URL}/contests`);
+      const contests = res.data || [];
 
-        const participatedList = contests.filter(
-          (c) =>
-            Array.isArray(c.participants) &&
-            c.participants.includes(user.email)
-        );
+      const participatedList = contests.filter(
+        (c) => Array.isArray(c.participants) && c.participants.includes(user.email)
+      );
+      const wonList = contests.filter((c) =>
+        Array.isArray(c.submissions) && c.submissions.some(s => s.userEmail === user.email && s.status === "winner")
+      );
 
-        const wonList = contests.filter(
-          (c) => c?.winner?.email === user.email
-        );
+      setParticipated(participatedList.length);
+      setWon(wonList.length);
+    } catch (err) {
+      console.error("Contest fetch error:", err?.response?.data || err.message);
+    }
+  };
 
-        setParticipated(participatedList.length);
-        setWon(wonList.length);
-      } catch (err) {
-        console.error("Contest fetch error:", err?.response?.data || err.message);
-      }
-    };
-
+  useEffect(() => {
     fetchContests();
-  }, [token, user?.email]);
+  }, [token, user?.email, contestStatsUpdated]); // run also when contestStatsUpdated changes
 
-  /* ================= UPDATE PROFILE ================= */
+  // Update profile
   const handleUpdate = async () => {
     if (!token) return alert("Login required");
 
     try {
+      setUpdating(true);
       const res = await axios.put(
         `${API_URL}/auth/me`,
         { name, photoURL, bio },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (res.data && typeof setUser === "function") {
-        setUser((prev) => ({ ...prev, ...res.data }));
-      }
-
+      if (res.data && setUser) setUser(prev => ({ ...prev, ...res.data }));
       alert("Profile updated successfully");
     } catch (err) {
       console.error("Profile update failed:", err?.response?.data || err.message);
       alert(err?.response?.data?.message || "Update failed");
+    } finally {
+      setUpdating(false);
     }
   };
 
-  if (loading) {
-    return <p className="text-center mt-10">Loading profile...</p>;
-  }
+  if (loading) return <p className="text-center mt-10">Loading profile...</p>;
 
-  const winPercentage = participated
-    ? Math.round((won / participated) * 100)
-    : 0;
-
+  const winPercentage = participated ? Math.round((won / participated) * 100) : 0;
   const chartData = {
     labels: ["Won", "Lost"],
     datasets: [
@@ -128,7 +116,7 @@ const MyProfile = () => {
     <div className="max-w-3xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
       <h1 className="text-3xl font-bold mb-6 text-center">My Profile</h1>
 
-      {/* PROFILE HEADER */}
+      {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
         <img
           src={photoURL || logo}
@@ -138,51 +126,55 @@ const MyProfile = () => {
         <div>
           <h2 className="text-xl font-semibold">{name || "User"}</h2>
           <p className="text-gray-500">{user?.email}</p>
+          {role && <p className="text-gray-600 mt-2">{role}</p>}
         </div>
       </div>
 
-      {/* FORM */}
+      {/* Profile Form */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <div>
-          <label>Name</label>
+          <label className="font-medium">Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
         <div>
-          <label>Photo URL</label>
+          <label className="font-medium">Photo URL</label>
           <input
             value={photoURL}
             onChange={(e) => setPhotoURL(e.target.value)}
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
         <div className="md:col-span-2">
-          <label>Bio</label>
+          <label className="font-medium">Bio</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
         <div className="md:col-span-2 text-right">
           <button
             onClick={handleUpdate}
-            className="bg-indigo-600 text-white px-6 py-2 rounded"
+            disabled={updating}
+            className={`px-6 py-2 rounded text-white ${
+              updating ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
-            Update Profile
+            {updating ? "Updating..." : "Update Profile"}
           </button>
         </div>
       </div>
 
-      {/* STATS */}
+      {/* Stats */}
       <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded">
-        <h2 className="mb-4 font-semibold">
+        <h2 className="mb-4 font-semibold text-center text-lg">
           Win Percentage: {winPercentage}%
         </h2>
         <Pie data={chartData} />

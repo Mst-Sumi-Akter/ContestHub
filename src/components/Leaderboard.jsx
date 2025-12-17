@@ -9,14 +9,25 @@ const Leaderboard = () => {
       try {
         const res = await fetch("http://localhost:5000/leaderboard");
         if (!res.ok) throw new Error("Failed to fetch leaderboard");
+
         const data = await res.json();
-        setLeaders(data);
+
+        // শুধুমাত্র normal users দেখাবে, creators/admins বাদ
+        const filteredLeaders = data.filter(
+          leader => leader.role !== "creator" && leader.role !== "admin"
+        );
+
+        // points অনুযায়ী descending sort
+        filteredLeaders.sort((a, b) => b.points - a.points);
+
+        setLeaders(filteredLeaders);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchLeaders();
   }, []);
 
@@ -58,11 +69,7 @@ const Leaderboard = () => {
                   </td>
                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        leader.role === "Winner"
-                          ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
-                      }`}
+                      className="px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
                     >
                       {leader.role}
                     </span>

@@ -43,11 +43,7 @@ const DashboardSidebar = ({ role }) => {
         label: "Submitted Tasks",
         icon: FiAward,
       },
-      {
-        to: " edit-contest",
-        label: " Edit Contest",
-        icon: FiEdit,
-      },
+      
     ],
     admin: [
       {
