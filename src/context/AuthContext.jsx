@@ -14,7 +14,7 @@ const AuthProvider = ({ children }) => {
 
   const googleProvider = new GoogleAuthProvider();
 
-  // Email/Password Login
+  // Login
   const loginUser = async (email, password) => {
     const res = await axios.post(`${API_URL}/auth/login`, { email, password });
     setUser(res.data);
@@ -23,7 +23,7 @@ const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  // Registration
+  // Register
   const registerUser = async (data) => {
     const res = await axios.post(`${API_URL}/auth/register`, data);
     setUser(res.data);
@@ -49,21 +49,21 @@ const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  
+  // Load logged-in user
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
+    const storedToken = localStorage.getItem("authToken");
+    if (!storedToken) {
       setLoading(false);
       return;
     }
 
     axios
       .get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${storedToken}` },
       })
       .then((res) => {
         setUser(res.data);
-        setToken(token);
+        setToken(storedToken);
       })
       .catch(() => localStorage.removeItem("authToken"))
       .finally(() => setLoading(false));
@@ -77,6 +77,7 @@ const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    setUser, // ✅ VERY IMPORTANT FIX
     token,
     loading,
     loginUser,

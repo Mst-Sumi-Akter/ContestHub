@@ -1,33 +1,37 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { div } from "framer-motion/client";
 
 // Countdown helper
 const calculateTimeLeft = (endDate) => {
   if (!endDate) return null;
-  const difference = new Date(endDate) - new Date();
-  if (difference <= 0) return null;
+  const diff = new Date(endDate) - new Date();
+  if (diff <= 0) return null;
 
   return {
-    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((difference / 1000 / 60) % 60),
-    seconds: Math.floor((difference / 1000) % 60),
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / 1000 / 60) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
   };
 };
 
 const ContestDetails = () => {
   const { user, loading: authLoading, token } = useContext(AuthContext);
-  const { id } = useParams(); // MongoDB _id
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [contest, setContest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [timeLeft, setTimeLeft] = useState(null);
+  const [registered, setRegistered] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submission, setSubmission] = useState("");
-  const [registered, setRegistered] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -38,81 +42,80 @@ const ContestDetails = () => {
     }
   }, [authLoading, user, navigate, id]);
 
-  // Fetch contest data
+  // Fetch contest
   useEffect(() => {
     if (!user || authLoading || !token) return;
 
     const fetchContest = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
         const res = await fetch(`${API_URL}/contests/${id}`, {
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, 
+            Authorization: `Bearer ${token}`,
           },
         });
-        if (!res.ok) throw new Error("Failed to fetch contest");
 
+        if (!res.ok) throw new Error("Failed to fetch contest");
         const data = await res.json();
 
-        //  Ensure participants is always an array
         if (!Array.isArray(data.participants)) data.participants = [];
+        if (!Array.isArray(data.submissions)) data.submissions = [];
 
         setContest(data);
         setTimeLeft(calculateTimeLeft(data.endDate));
 
-        // Check if user already registered
-        const isRegistered = data.participants.includes(user.email);
-        setRegistered(isRegistered);
+        // registration check
+        setRegistered(data.participants.includes(user.email));
+
+        // submission check
+        const submitted = data.submissions.some(
+          (s) => s.email === user.email
+        );
+        setHasSubmitted(submitted);
 
         setError(null);
       } catch (err) {
-        setError(err.message || "Something went wrong");
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchContest();
-  }, [id, user, authLoading, API_URL, token]);
+  }, [id, user, authLoading, token]);
 
-  // Countdown timer
+  // Countdown
   useEffect(() => {
     if (!contest) return;
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft(contest.endDate));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [contest]);
 
-  // Register for contest
+  // Register contest
   const handleRegister = async () => {
     try {
       const res = await fetch(`${API_URL}/contests/${id}/register`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Registration failed");
-      }
+      if (!res.ok) throw new Error("Registration failed");
 
       setRegistered(true);
-      setContest({
-        ...contest,
-        participants: [...contest.participants, user.email],
-      });
+      setContest((prev) => ({
+        ...prev,
+        participants: [...prev.participants, user.email],
+      }));
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Submit task
+  // Submit task (ONLY ONCE)
   const handleSubmitTask = async () => {
     if (!submission.trim()) {
       alert("Submission cannot be empty");
@@ -129,12 +132,10 @@ const ContestDetails = () => {
         body: JSON.stringify({ submission }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Submission failed");
-      }
+      if (!res.ok) throw new Error("Submission failed");
 
       alert("Task submitted successfully!");
+      setHasSubmitted(true);
       setShowSubmitModal(false);
       setSubmission("");
     } catch (err) {
@@ -144,82 +145,55 @@ const ContestDetails = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full" />
+      <div className="min-h-[60vh] flex justify-center items-center">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center text-red-600">
-        {error}
-      </div>
-    );
+    return <p className="text-center text-red-600">{error}</p>;
   }
 
   if (!contest) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center text-gray-500">
-        Contest not found
-      </div>
-    );
+    return <p className="text-center text-gray-500">Contest not found</p>;
   }
 
   const ended = !timeLeft;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+    <div className="pt-20 pb-20">
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       <img
-        src={contest.image || "https://via.placeholder.com/800x400?text=Contest"}
+        src={contest.image || "https://via.placeholder.com/800x400"}
         alt={contest.title}
         className="w-full h-64 object-cover rounded-lg mb-6"
       />
 
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
-        {contest.title}
-      </h1>
+      <h1 className="text-3xl font-bold mb-4">{contest.title}</h1>
 
-      <div className="flex justify-between mb-4">
-        <p>
-          <strong>Participants:</strong> {contest.participants.length}
-        </p>
-        <p>
-          <strong>Prize:</strong> {contest.reward || "—"}
-        </p>
+      <div className="flex justify-between mb-4 text-sm">
+        <p><strong>Participants:</strong> {contest.participants.length}</p>
+        <p><strong>Prize:</strong> { contest.prizeMoney || "—"}</p>
       </div>
 
-      <p className="mb-4 text-red-600 font-semibold">
+      <p className="text-red-600 font-semibold mb-4">
         {ended
           ? "Contest Ended"
-          : `Time Left: ${timeLeft.days || 0}d ${timeLeft.hours || 0}h ${
-              timeLeft.minutes || 0
-            }m ${timeLeft.seconds || 0}s`}
+          : `Time Left: ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`}
       </p>
 
-      <p className="text-gray-700 dark:text-gray-300 mb-6">{contest.description}</p>
-
-      {contest.winner && (
-        <div className="mb-6">
-          <h2 className="font-semibold text-lg mb-2">Winner</h2>
-          <div className="flex items-center gap-4">
-            <img
-              src={contest.winner.photo || "https://via.placeholder.com/64"}
-              alt={contest.winner.name}
-              className="w-16 h-16 rounded-full"
-            />
-            <span className="text-gray-800 dark:text-white">{contest.winner.name}</span>
-          </div>
-        </div>
-      )}
+      <p className="text-gray-700 mb-6">{contest.description}</p>
 
       {!ended && (
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-4">
           <button
             onClick={handleRegister}
             disabled={registered}
             className={`px-4 py-2 rounded-lg text-white ${
-              registered ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+              registered
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
             }`}
           >
             {registered ? "Registered" : "Register / Pay"}
@@ -227,35 +201,43 @@ const ContestDetails = () => {
 
           {registered && (
             <button
-              onClick={() => setShowSubmitModal(true)}
-              className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white"
+              disabled={hasSubmitted}
+              onClick={() => {
+                if (!hasSubmitted) setShowSubmitModal(true);
+              }}
+              className={`px-4 py-2 rounded-lg text-white ${
+                hasSubmitted
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
             >
-              Submit Task
+              {hasSubmitted ? "Task Submitted" : "Submit Task"}
             </button>
           )}
         </div>
       )}
 
+      {/* Submit Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-96">
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
             <h3 className="text-xl font-semibold mb-4">Submit Your Task</h3>
             <textarea
               value={submission}
               onChange={(e) => setSubmission(e.target.value)}
-              className="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Provide your submission link or details..."
+              className="w-full border p-2 rounded mb-4"
+              placeholder="Submission link or details"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowSubmitModal(false)}
-                className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300 rounded"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitTask}
-                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="px-4 py-2 bg-indigo-600 text-white rounded"
               >
                 Submit
               </button>
@@ -263,6 +245,7 @@ const ContestDetails = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

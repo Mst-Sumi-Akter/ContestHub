@@ -5,6 +5,7 @@ import {
   FiAward,
   FiUsers,
   FiClipboard,
+  FiEdit,
 } from "react-icons/fi";
 
 const DashboardSidebar = ({ role }) => {
@@ -41,6 +42,11 @@ const DashboardSidebar = ({ role }) => {
         to: "submitted-tasks",
         label: "Submitted Tasks",
         icon: FiAward,
+      },
+      {
+        to: " edit-contest",
+        label: " Edit Contest",
+        icon: FiEdit,
       },
     ],
     admin: [

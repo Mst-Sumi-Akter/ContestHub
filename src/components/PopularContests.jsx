@@ -39,7 +39,7 @@ const PopularContests = ({ isLoggedIn }) => {
     text && text.length > n ? text.slice(0, n) + "..." : text;
 
   return (
-    <div className="popular-contests p-20 max-w-7xl mx-auto">
+    <div className="popular-contests p-20 max-w-7xl mx-auto ">
       <h2 className=" mb-20 text-3xl font-bold text-indigo-700  text-center">
         🔥 Popular Contests
       </h2>
@@ -71,10 +71,17 @@ const PopularContests = ({ isLoggedIn }) => {
                   </div>
 
                   <p className="text-gray-500 mb-2 flex-1">{truncate(contest.description, 100)}</p>
+                   <p>
+                      Reward:{" "}
+                      <span className="font-medium text-gray-700 dark:text-gray-200">
+                        {contest.reward ?? "—"}
+                      </span>
+                    </p>
 
                   <p className="text-sm text-gray-400 mb-4">
                     Participants: {contest.participants?.length || 0}
                   </p>
+                 
 
                   <button
                     onClick={() => handleDetailsClick(contest._id)}

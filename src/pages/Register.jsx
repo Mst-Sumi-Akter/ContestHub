@@ -27,6 +27,7 @@ const Register = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
     const photoURL = e.target.photoURL.value;
+    const bio = e.target.bio.value; // new bio field
 
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters!");
@@ -35,12 +36,10 @@ const Register = () => {
     }
 
     try {
-      // Call AuthContext registerUser if implemented
-      // Or call backend directly
       const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role, photoURL }),
+        body: JSON.stringify({ name, email, password, role, photoURL, bio }),
       });
       const data = await res.json();
 
@@ -135,6 +134,18 @@ const Register = () => {
               className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
+
+          {/* ------------------ New Bio Field ------------------ */}
+          <div>
+            <label className="block text-gray-700 dark:text-gray-200 mb-1">Bio</label>
+            <textarea
+              name="bio"
+              placeholder="Tell something about yourself..."
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              rows={3}
+            ></textarea>
+          </div>
+          {/* -------------------------------------------------- */}
 
           <div>
             <label className="block text-gray-700 dark:text-gray-200 mb-1">Role</label>
