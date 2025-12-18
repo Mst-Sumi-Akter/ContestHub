@@ -66,7 +66,7 @@ const EditContest = () => {
         { ...contest, endDate: deadline },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Contest updated successfully");
+      toast.success("Contest updated successfully", { id: "contest-action" });
       navigate("/dashboard/my-created");
     } catch (err) {
       toast.error(err.response?.data?.message || "Update failed");

@@ -31,10 +31,10 @@ const Login = () => {
 
     try {
       await loginUser(email, password); // sets user & token in context
-      toast.success("Login successful!");
+      toast.success("Login successful!", { id: "auth" });
       navigate(from, { replace: true }); // Redirect after login
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Login failed");
+      toast.error(err.response?.data?.message || err.message || "Login failed", { id: "auth" });
     } finally {
       setFormLoading(false);
     }
@@ -45,10 +45,10 @@ const Login = () => {
     setFormLoading(true);
     try {
       await googleLogin(); // sets user & token in context
-      toast.success("Google login successful!");
+      toast.success("Google login successful!", { id: "auth" });
       navigate(from, { replace: true }); // Redirect after login
     } catch (err) {
-      toast.error(err.message || "Google login failed");
+      toast.error(err.message || "Google login failed", { id: "auth" });
     } finally {
       setFormLoading(false);
     }

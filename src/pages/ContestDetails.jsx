@@ -130,7 +130,7 @@ const ContestDetails = () => {
         ...prev,
         participants: [...prev.participants, user.email],
       }));
-      toast.success("Successfully Registered!");
+      toast.success("Successfully Registered!", { id: "registration" });
     } catch (err) {
       toast.error(err.message);
     }

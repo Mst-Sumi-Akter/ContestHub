@@ -30,7 +30,7 @@ const Register = () => {
     const bio = e.target.bio.value; // new bio field
 
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters!");
+      toast.error("Password must be at least 6 characters!", { id: "auth" });
       setFormLoading(false);
       return;
     }
@@ -46,10 +46,10 @@ const Register = () => {
       if (!res.ok) throw new Error(data.message || "Registration failed");
 
       localStorage.setItem("authToken", data.token); // save token
-      toast.success("Registration successful!");
+      toast.success("Registration successful!", { id: "auth" });
       navigate("/"); // redirect to home
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message, { id: "auth" });
     } finally {
       setFormLoading(false);
     }
@@ -60,10 +60,10 @@ const Register = () => {
     setFormLoading(true);
     try {
       await googleLogin(); // sets user & token in context
-      toast.success("Google login successful!");
+      toast.success("Google login successful!", { id: "auth" });
       navigate("/"); // redirect after login
     } catch (err) {
-      toast.error(err.message || "Google login failed");
+      toast.error(err.message || "Google login failed", { id: "auth" });
     } finally {
       setFormLoading(false);
     }

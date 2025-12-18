@@ -44,7 +44,7 @@ const ManageContests = () => {
   // Admin actions: confirm, reject, delete
   const handleAction = async (id, action) => {
     if (!user || user.role !== "admin") {
-      toast.error("Only admin can perform this action");
+      toast.error("Only admin can perform this action", { id: "admin-action" });
       return;
     }
 
@@ -54,14 +54,14 @@ const ManageContests = () => {
       if (action === "delete") {
         await axios.delete(`${API_URL}/contests/${id}`, config);
         setContests(contests.filter((c) => c._id !== id));
-        toast.success("Contest deleted successfully");
+        toast.success("Contest deleted successfully", { id: "admin-action" });
       } else {
         // Confirm or Reject
         await axios.put(`${API_URL}/contests/status/${id}`, { status: action }, config);
         setContests(
           contests.map((c) => (c._id === id ? { ...c, status: action } : c))
         );
-        toast.success(`Contest ${action}ed successfully`);
+        toast.success(`Contest ${action}ed successfully`, { id: "admin-action" });
       }
     } catch (err) {
       console.error(`${action} error:`, err.response?.data || err.message);
@@ -109,13 +109,12 @@ const ManageContests = () => {
                 <td className="px-4 py-2">{contest.category || "-"}</td>
                 <td className="px-4 py-2">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      contest.status === "confirmed"
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${contest.status === "confirmed"
                         ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
                         : contest.status === "rejected"
-                        ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
-                    }`}
+                          ? "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100"
+                      }`}
                   >
                     {contest.status || "pending"}
                   </span>

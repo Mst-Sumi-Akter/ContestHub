@@ -57,7 +57,7 @@ const AddContest = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      toast.success("Contest created successfully!");
+      toast.success("Contest created successfully!", { id: "contest-action" });
       reset();
       setDeadline(new Date());
     } catch (err) {

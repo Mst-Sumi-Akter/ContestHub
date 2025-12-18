@@ -96,7 +96,7 @@ const MyProfile = () => {
       );
 
       if (res.data && setUser) setUser(prev => ({ ...prev, ...res.data }));
-      toast.success("Profile updated successfully");
+      toast.success("Profile updated successfully", { id: "profile-update" });
     } catch (err) {
       console.error("Profile update failed:", err?.response?.data || err.message);
       setError(err?.response?.data?.message || "Update failed");
