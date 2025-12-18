@@ -1,16 +1,49 @@
-# React + Vite
+# ContestHub 🏆
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, platform that allows users to create, discover, participate in, and manage creative contests.
 
-Currently, two official plugins are available:
+🔗 **Live Site URL:** [Insert Live Link Here]
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+-   **User Roles**: Admin, Contest Creator, and Normal User with dedicated dashboards.
+-   **Contest Discovery**: Browse contests by category, popularity, and search queries.
+-   **Secure Authentication**: JWT-based login and registration with Google Sign-in support.
+-   **Payment Integration**: (Mock/Simulated) flow for contest registration.
+-   **Dashboard Management**:
+    -   *Creators*: Add/Edit contests, view submissions, declare winners.
+    -   *Admins*: Manage users, approve/reject contests.
+    -   *Users*: Track participation and winning history.
+-   **Leaderboard**: Dynamic ranking of users based on contest wins.
+-   **Responsive Design**: Fully optimized for mobile, tablet, and desktop.
+-   **Dark/Light Theme**: Persistent theme toggle using local storage.
+-   **Notifications**: Toast notifications for all major actions.
+-   **Data Visualization**: Win percentage charts for user profiles.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+-   **Frontend**: React, Vite, Tailwind CSS, Framer Motion, React Router, React Hook Form, TanStack Query (optional), Axios.
+-   **Backend**: Node.js, Express.js.
+-   **Database**: MongoDB.
+-   **Authentication**: Firebase (Social), JWT (Session).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Getting Started
+
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    cd contest-hub-client && npm install
+    cd contest-hub-server && npm install
+    ```
+3.  Set up environment variables in `.env`.
+4.  Run the development servers:
+    ```bash
+    # Client
+    npm run dev
+    # Server
+    npm run start
+    ```
+
+## 📜 License
+
+This project is licensed under the MIT License.

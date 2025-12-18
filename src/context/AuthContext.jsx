@@ -3,6 +3,7 @@ import axios from "axios";
 import { auth } from "../firebase/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
+/* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -10,9 +11,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // ✅ New state for contest stats update
+  const [loading, setLoading] = useState(!!localStorage.getItem("authToken"));
   const [contestStatsUpdated, setContestStatsUpdated] = useState(false);
 
   const googleProvider = new GoogleAuthProvider();
@@ -56,7 +55,9 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
     if (!storedToken) {
-      setLoading(false);
+      // loading is already initialized to false/true correctly but if we are here it is false
+      // NO, if we used !!localStorage.getItem("authToken"), then if it's null, loading is false.
+      // So no need to setLoading(false) here!
       return;
     }
 

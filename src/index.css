@@ -1,5 +1,12 @@
 @import "tailwindcss";
 @plugin "daisyui";
-body{
-    background-color: rgb(235, 232, 232);
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  @apply bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-300;
+}
+
+.heading-primary {
+  @apply font-black tracking-tighter leading-none text-slate-900 dark:text-white;
 }

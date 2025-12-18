@@ -3,12 +3,12 @@ import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const SubmittedTasks = () => {
   const { user, token } = useContext(AuthContext);
   const [contests, setContests] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // Fetch contests created by creator
   useEffect(() => {
@@ -51,13 +51,13 @@ const SubmittedTasks = () => {
         prev.map((contest) =>
           contest._id === contestId
             ? {
-                ...contest,
-                submissions: contest.submissions.map((sub) =>
-                  sub.userEmail === submission.userEmail
-                    ? { ...sub, status: "winner" }
-                    : sub
-                ),
-              }
+              ...contest,
+              submissions: contest.submissions.map((sub) =>
+                sub.userEmail === submission.userEmail
+                  ? { ...sub, status: "winner" }
+                  : sub
+              ),
+            }
             : contest
         )
       );

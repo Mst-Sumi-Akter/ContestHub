@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect } from "react";
 
 // Create ThemeContext as named export
+/* eslint-disable react-refresh/only-export-components */
 export const ThemeContext = createContext();
 
 const ThemeProvider = ({ children }) => {
@@ -16,9 +17,11 @@ const ThemeProvider = ({ children }) => {
     if (theme === "dark") {
       root.classList.add("dark");
       root.classList.remove("light");
+      root.setAttribute("data-theme", "dark");
     } else {
       root.classList.add("light");
       root.classList.remove("dark");
+      root.setAttribute("data-theme", "light");
     }
 
     localStorage.setItem("theme", theme);

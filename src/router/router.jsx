@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 // Pages
 import Home from "../pages/Home";
 import AllContests from "../pages/AllContests";
+import About from "../pages/About";
 import ContestDetails from "../pages/ContestDetails";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Login from "../pages/Login";
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
     element: <MainLayout />,
     children: [
       { path: "/", element: <Home /> },
+      { path: "/about", element: <About /> },
       { path: "/all-contests", element: <AllContests /> },
       {
         path: "/contest/:id",
@@ -55,8 +57,8 @@ export const router = createBrowserRouter([
           { path: "my-created", element: <MyCreatedContests /> },
           { path: "submitted-tasks", element: <SubmittedTasks /> },
           { path: "edit-contest/:id", element: <EditContest /> },
-          
-          
+
+
         ],
       },
       { path: "/leaderboard", element: <Leaderboard /> },

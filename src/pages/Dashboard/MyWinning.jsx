@@ -3,12 +3,12 @@ import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const MyWinning = () => {
   const { user, token } = useContext(AuthContext);
   const [contests, setContests] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     if (!user?.email || !token) return;

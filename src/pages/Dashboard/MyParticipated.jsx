@@ -2,12 +2,12 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const MyParticipated = () => {
   const { user, token } = useContext(AuthContext);
   const [contests, setContests] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     if (!user?.email || !token) return;
@@ -64,8 +64,8 @@ const MyParticipated = () => {
         {contests.map((contest) => {
           const participant = Array.isArray(contest.participants)
             ? contest.participants.find((p) =>
-                typeof p === "string" ? p === user.email : p.email === user.email
-              )
+              typeof p === "string" ? p === user.email : p.email === user.email
+            )
             : null;
           const paymentStatus = participant?.status || "pending";
 
@@ -104,11 +104,10 @@ const MyParticipated = () => {
                   </span>
                 </p>
                 <span
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    paymentStatus === "paid"
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${paymentStatus === "paid"
                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                       : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                  }`}
+                    }`}
                 >
                   Payment: {paymentStatus}
                 </span>

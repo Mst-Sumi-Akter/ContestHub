@@ -1,5 +1,6 @@
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router/router";
+import { Toaster } from "react-hot-toast";
 
 import ThemeProvider from "./context/ThemeContext";
 import AuthProvider from "./context/AuthContext";

@@ -1,16 +1,22 @@
-import React, { useEffect, useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ManageUsers = () => {
+  const { token } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!token) return;
       try {
-        const res = await axios.get(`${API_URL}/users`); // make sure your backend exposes /users route
+        const res = await axios.get(`${API_URL}/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setUsers(res.data || []);
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -20,12 +26,16 @@ const ManageUsers = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [token]);
 
   // Change user role
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await axios.put(`${API_URL}/users/${userId}/role`, { role: newRole });
+      await axios.put(
+        `${API_URL}/users/${userId}/role`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setUsers((prev) =>
         prev.map((user) =>
           user._id === userId ? { ...user, role: newRole } : user

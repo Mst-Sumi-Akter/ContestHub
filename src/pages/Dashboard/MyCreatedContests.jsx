@@ -4,6 +4,8 @@ import { AuthContext } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const MyCreatedContests = () => {
   const { user, token } = useContext(AuthContext);
   const [contests, setContests] = useState([]);
@@ -11,8 +13,6 @@ const MyCreatedContests = () => {
   const [openContestId, setOpenContestId] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [subLoading, setSubLoading] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // ================= FETCH MY CONTESTS =================
   useEffect(() => {
@@ -33,7 +33,7 @@ const MyCreatedContests = () => {
         }));
 
         setContests(contestsWithStatus);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load contests");
       } finally {
         setLoading(false);
@@ -114,10 +114,9 @@ const MyCreatedContests = () => {
                     <td className="px-4 py-3">
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-semibold capitalize
-                          ${
-                            contest.status === "pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : contest.status === "confirmed"
+                          ${contest.status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : contest.status === "confirmed"
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700"
                           }`}

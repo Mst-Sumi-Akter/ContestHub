@@ -7,7 +7,7 @@ const Dashboard = () => {
   const { user } = useContext(AuthContext);
 
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-black">
       {/* Sidebar */}
       <DashboardSidebar role={user?.role} />
 

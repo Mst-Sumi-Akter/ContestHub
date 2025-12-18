@@ -57,9 +57,8 @@ const Leaderboard = () => {
               {leaders.map((leader, idx) => (
                 <tr
                   key={leader.id || idx}
-                  className={`text-center transition-colors duration-300 ${
-                    idx % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700"
-                  }`}
+                  className={`text-center transition-colors duration-300 ${idx % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700"
+                    }`}
                 >
                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 font-medium">
                     {idx + 1}

@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+/* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
+import PaymentModal from "../components/PaymentModal";
+import toast from "react-hot-toast";
 
 // Helper: calculate countdown
 const calculateTimeLeft = (endDate) => {
@@ -16,6 +19,8 @@ const calculateTimeLeft = (endDate) => {
     seconds: Math.floor((diff / 1000) % 60),
   };
 };
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ContestDetails = () => {
   const { user, loading: authLoading, token } = useContext(AuthContext);
@@ -32,25 +37,30 @@ const ContestDetails = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submission, setSubmission] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  // Payment State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/login", { state: { from: `/contest/${id}` } });
+      // Don't redirect immediately on load, only on action interaction usually, 
+      // but if page is protected, this is fine. 
+      // User context might load after page load slightly.
     }
-  }, [authLoading, user, navigate, id]);
+  }, [authLoading, user]);
 
   // Fetch contest data
   useEffect(() => {
-    if (!user || authLoading || !token) return;
-
+    // We can allow public view, so don't return if !user or !token immediately unless private
     const fetchContest = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/contests/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Public endpoint if supported, or protected. Based on existing code it was protected.
+        // Let's rely on token if available, but for details it should ideally be public?
+        // Existing code used token for headers.
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const res = await fetch(`${API_URL}/contests/${id}`, { headers });
 
         if (!res.ok) throw new Error("Failed to fetch contest");
         const data = await res.json();
@@ -60,15 +70,15 @@ const ContestDetails = () => {
 
         setContest(data);
 
-        // Only allow normal users to participate
-        if (user.role === "admin" || user.role === "creator") {
-          setRegistered(true);
-          setHasSubmitted(true);
-        } else {
-          setRegistered(data.participants.includes(user.email));
-          setHasSubmitted(
-            data.submissions.some((s) => s.userEmail === user.email)
-          );
+        // Check user status
+        if (user) {
+          if (user.role === "admin" || user.role === "creator") {
+            setRegistered(true);
+            setHasSubmitted(true);
+          } else {
+            setRegistered(data.participants.includes(user.email));
+            setHasSubmitted(data.submissions.some((s) => s.userEmail === user.email));
+          }
         }
 
         setTimeLeft(calculateTimeLeft(data.endDate));
@@ -92,15 +102,27 @@ const ContestDetails = () => {
     return () => clearInterval(timer);
   }, [contest]);
 
-  // Register for contest (normal user only)
-  const handleRegister = async () => {
+  // Handle Register Click
+  const handleRegisterClick = () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/contest/${id}` } });
+      return;
+    }
     if (user.role === "admin" || user.role === "creator") return;
+
+    if (contest.price && contest.price > 0) {
+      setIsPaymentModalOpen(true);
+    } else {
+      registerUser();
+    }
+  };
+
+  const registerUser = async () => {
     try {
       const res = await fetch(`${API_URL}/contests/${id}/register`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error("Registration failed");
 
       setRegistered(true);
@@ -108,15 +130,21 @@ const ContestDetails = () => {
         ...prev,
         participants: [...prev.participants, user.email],
       }));
+      toast.success("Successfully Registered!");
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsPaymentModalOpen(false);
+    registerUser();
   };
 
   // Submit task (normal user only, once)
   const handleSubmitTask = async () => {
     if (user.role === "admin" || user.role === "creator") return;
-    if (!submission.trim()) return alert("Submission cannot be empty");
+    if (!submission.trim()) return toast.error("Submission cannot be empty");
 
     try {
       const res = await fetch(`${API_URL}/contests/${id}/submit-task`, {
@@ -136,9 +164,9 @@ const ContestDetails = () => {
       setHasSubmitted(true);
       setShowSubmitModal(false);
       setSubmission("");
-      alert("Task submitted successfully!");
+      toast.success("Task submitted successfully!");
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -156,102 +184,129 @@ const ContestDetails = () => {
   const ended = !timeLeft;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="pt-20 pb-20"
-    >
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors pt-10 pb-20">
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        price={contest.price || 0}
+        onSuccess={handlePaymentSuccess}
+      />
+
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-4xl mx-auto p-6"
       >
-        <img
-          src={contest.image || "https://via.placeholder.com/800x400"}
-          alt={contest.title}
-          className="w-full h-64 object-cover rounded-lg mb-6"
-        />
-        <h1 className="text-3xl font-bold mb-4">{contest.title}</h1>
-        <div className="flex justify-between mb-4 text-sm">
-          <p>
-            <strong>Participants:</strong> {contest.participants.length}
-          </p>
-          <p>
-            <strong>Prize:</strong> ${contest.prizeMoney}
-          </p>
-        </div>
-        <p className="text-red-600 font-semibold mb-4">
-          {ended
-            ? "Contest Ended"
-            : `Time Left: ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`}
-        </p>
-        <p className="text-gray-700 mb-6">{contest.description}</p>
-
-        {!ended && user.role === "user" && (
-          <div className="flex gap-4">
-            <button
-              onClick={handleRegister}
-              disabled={registered}
-              className={`px-4 py-2 rounded-lg text-white ${
-                registered
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
-            >
-              {registered ? "Registered" : "Register / Pay"}
-            </button>
-
-            {registered && (
-              <button
-                disabled={hasSubmitted}
-                onClick={() => setShowSubmitModal(true)}
-                className={`px-4 py-2 rounded-lg text-white ${
-                  hasSubmitted
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700"
-                }`}
-              >
-                {hasSubmitted ? "Task Submitted" : "Submit Task"}
-              </button>
-            )}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+          <div className="relative h-64 md:h-96 w-full">
+            <img
+              src={contest.image || "https://via.placeholder.com/800x400"}
+              alt={contest.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+              <div className="p-8 w-full">
+                <h1 className="text-4xl text-white font-bold mb-2 shadow-sm">{contest.title}</h1>
+                <div className="flex gap-4 text-gray-200 text-sm font-medium">
+                  <span className="bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm">Participants: {contest.participants.length}</span>
+                  <span className="bg-indigo-600/80 px-3 py-1 rounded-full backdrop-blur-sm">Prize: ${contest.prizeMoney}</span>
+                  <span className="bg-green-600/80 px-3 py-1 rounded-full backdrop-blur-sm">Fee: {contest.price > 0 ? `$${contest.price}` : "Free"}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row gap-8">
+              <div className="md:w-2/3">
+                <h2 className="text-2xl font-bold mb-4 border-b pb-2 dark:border-gray-700">Description</h2>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {contest.description}
+                </p>
+
+                <div className="mt-8">
+                  <h3 className="font-bold mb-2">Instructions</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {contest.instructions || "Follow the general contest guidelines. Submit your work before the deadline."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="md:w-1/3 space-y-6">
+                <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl text-center">
+                  <h3 className="text-lg font-bold mb-2">Time Remaining</h3>
+                  <div className="text-2xl font-mono text-indigo-600 dark:text-indigo-400 font-bold">
+                    {ended ? "Ended" : `${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`}
+                  </div>
+                </div>
+
+                {!ended && user?.role !== "admin" && user?.role !== "creator" && (
+                  <div className="space-y-4">
+                    <button
+                      onClick={handleRegisterClick}
+                      disabled={registered}
+                      className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg transition-transform transform active:scale-95 ${registered
+                        ? "bg-gray-400 cursor-not-allowed opacity-70"
+                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                        }`}
+                    >
+                      {registered ? "Registered" : contest.price > 0 ? "Pay & Join" : "Register Now"}
+                    </button>
+
+                    {registered && (
+                      <button
+                        disabled={hasSubmitted}
+                        onClick={() => setShowSubmitModal(true)}
+                        className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg transition-transform transform active:scale-95 ${hasSubmitted
+                          ? "bg-green-800/50 cursor-not-allowed text-white"
+                          : "bg-green-600 hover:bg-green-700 text-white"
+                          }`}
+                      >
+                        {hasSubmitted ? "Task Submitted" : "Submit Task"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Modal */}
+      {/* Submit Modal */}
       <AnimatePresence>
         {showSubmitModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.8 }}
+              initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              className="bg-white p-6 rounded-lg w-96"
+              exit={{ scale: 0.9 }}
+              className="bg-white dark:bg-gray-800 p-8 rounded-2xl w-full max-w-lg shadow-2xl relative"
             >
-              <h3 className="text-xl font-semibold mb-4">Submit Your Task</h3>
+              <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Submit Your Entry</h3>
               <textarea
                 value={submission}
                 onChange={(e) => setSubmission(e.target.value)}
-                className="w-full border p-2 rounded mb-4"
-                placeholder="Enter your task submission..."
+                className="w-full border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl mb-6 h-40 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                placeholder="Paste your project link or description here..."
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowSubmitModal(false)}
-                  className="px-4 py-2 bg-gray-300 rounded"
+                  className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSubmitTask}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded"
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-500/30"
                   disabled={hasSubmitted}
                 >
                   Submit
@@ -261,7 +316,7 @@ const ContestDetails = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 

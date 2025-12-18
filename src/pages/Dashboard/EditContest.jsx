@@ -6,6 +6,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const EditContest = () => {
   const { token, user } = useContext(AuthContext);
   const { id } = useParams();
@@ -15,8 +17,6 @@ const EditContest = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [deadline, setDeadline] = useState(new Date());
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // ================= FETCH CONTEST =================
   useEffect(() => {
@@ -36,7 +36,7 @@ const EditContest = () => {
 
         setContest(res.data);
         if (res.data.endDate) setDeadline(new Date(res.data.endDate));
-      } catch (err) {
+      } catch {
         toast.error("Failed to load contest data");
       } finally {
         setLoading(false);
