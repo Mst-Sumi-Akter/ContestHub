@@ -66,7 +66,7 @@ const EditContest = () => {
   if (isError || !contest) return <p className="text-center mt-10 text-red-500">Contest not found</p>;
   if (!formData) return null;
 
-  // ================= FETCH CONTEST =================
+
 
 
   // ================= HANDLE CHANGE =================
