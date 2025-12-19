@@ -9,6 +9,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <Toaster position="top-right" />
         <RouterProvider router={router} />
       </AuthProvider>
     </ThemeProvider>

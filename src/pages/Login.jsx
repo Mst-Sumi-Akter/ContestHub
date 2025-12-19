@@ -17,7 +17,7 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      navigate(from, { replace: true });
+      navigate("/", { replace: true });
     }
   }, [user, loading, from, navigate]);
 
@@ -32,7 +32,7 @@ const Login = () => {
     try {
       await loginUser(email, password); // sets user & token in context
       toast.success("Login successful!", { id: "auth" });
-      navigate(from, { replace: true }); // Redirect after login
+      navigate("/", { replace: true }); // Redirect after login
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || "Login failed", { id: "auth" });
     } finally {
@@ -46,7 +46,7 @@ const Login = () => {
     try {
       await googleLogin(); // sets user & token in context
       toast.success("Google login successful!", { id: "auth" });
-      navigate(from, { replace: true }); // Redirect after login
+      navigate("/", { replace: true }); // Redirect after login
     } catch (err) {
       toast.error(err.message || "Google login failed", { id: "auth" });
     } finally {

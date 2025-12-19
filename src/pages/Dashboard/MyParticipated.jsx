@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
+import Loading from "../../components/Loading";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -41,12 +42,7 @@ const MyParticipated = () => {
     fetchContests();
   }, [user?.email, token]);
 
-  if (loading)
-    return (
-      <p className="text-center mt-16 text-gray-500 dark:text-gray-400 text-lg">
-        Loading your contests...
-      </p>
-    );
+  if (loading) return <Loading />;
 
   if (contests.length === 0)
     return (
@@ -105,8 +101,8 @@ const MyParticipated = () => {
                 </p>
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${paymentStatus === "paid"
-                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                     }`}
                 >
                   Payment: {paymentStatus}

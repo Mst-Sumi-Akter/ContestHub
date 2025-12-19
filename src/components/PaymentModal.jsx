@@ -122,7 +122,6 @@ const CheckoutForm = ({ price, onSuccess, onClose }) => {
                     <button
                         type="button"
                         onClick={() => {
-                            toast.success("Registering you now...", { id: "registration" });
                             onSuccess("fast_" + Date.now());
                         }}
                         className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xl shadow-xl shadow-indigo-500/20 transition transform active:scale-95"
@@ -218,7 +217,6 @@ const CheckoutForm = ({ price, onSuccess, onClose }) => {
                         <button
                             type="button"
                             onClick={() => {
-                                toast.success("Bypassing payment for testing...", { id: "registration" });
                                 onSuccess("bypass_" + Date.now());
                             }}
                             className="text-xs font-bold text-gray-400 hover:text-indigo-600 transition underline"

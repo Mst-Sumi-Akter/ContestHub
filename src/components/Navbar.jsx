@@ -60,6 +60,10 @@ const Navbar = () => {
                         isActive ? "text-blue-600" : "hover:text-blue-500"
                     }>Leaderboard</NavLink>
 
+                    <NavLink to="/contact" className={({ isActive }) =>
+                        isActive ? "text-blue-600" : "hover:text-blue-500"
+                    }>Contact Us</NavLink>
+
                     <button onClick={toggleTheme} className="text-2xl">
                         {theme === "dark" ? <BiMoon /> : <BiSun />}
                     </button>
@@ -134,6 +138,9 @@ const Navbar = () => {
                     </NavLink>
                     <NavLink onClick={() => setOpen(false)} to="/leaderboard" className="block text-lg font-medium">
                         Leaderboard
+                    </NavLink>
+                    <NavLink onClick={() => setOpen(false)} to="/contact" className="block text-lg font-medium">
+                        Contact Us
                     </NavLink>
 
                     {/* Theme */}

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Loading from "./Loading";
 
 const PopularContests = () => {
   const navigate = useNavigate();
   const [contests, setContests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Fetch contests
   useEffect(() => {
@@ -14,6 +16,8 @@ const PopularContests = () => {
         setContests(data);
       } catch (err) {
         console.error("Error fetching contests:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchContests();
@@ -25,11 +29,13 @@ const PopularContests = () => {
 
   const handleShowAll = () => navigate("/all-contests");
 
+  if (loading) return <Loading />;
+
   return (
     <div className="popular-contests py-20 px-4 max-w-7xl mx-auto">
 
       <div className="text-center mb-16">
-        <h2 className="heading-primary text-3xl md:text-5xl mb-4">
+        <h2 className="heading-primary  text-3xl md:text-5xl mb-4">
           🔥 Popular Contests
         </h2>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -90,7 +96,7 @@ const PopularContests = () => {
       <div className="text-center mt-12">
         <button
           onClick={handleShowAll}
-          className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 transform"
+          className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 transform"
         >
           Explore All Contests
         </button>

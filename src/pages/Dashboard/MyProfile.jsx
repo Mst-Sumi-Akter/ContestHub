@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
+import Loading from "../../components/Loading";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import toast from "react-hot-toast";
@@ -106,7 +107,7 @@ const MyProfile = () => {
     }
   };
 
-  if (loading) return <p className="text-center mt-10">Loading profile...</p>;
+  if (loading) return <Loading />;
 
   const winPercentage = participated ? Math.round((won / participated) * 100) : 0;
   const chartData = {

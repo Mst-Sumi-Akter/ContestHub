@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Loading from "./Loading";
 
 const Leaderboard = () => {
   const [leaders, setLeaders] = useState([]);
@@ -31,8 +32,7 @@ const Leaderboard = () => {
     fetchLeaders();
   }, []);
 
-  if (loading)
-    return <p className="text-center mt-10 text-gray-600">Loading leaderboard...</p>;
+  if (loading) return <Loading />;
 
   return (
     <div className="max-w-5xl mx-auto p-6">

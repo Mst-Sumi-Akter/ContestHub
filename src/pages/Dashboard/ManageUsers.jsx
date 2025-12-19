@@ -1,6 +1,7 @@
 import { AuthContext } from "../../context/AuthContext";
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
+import Loading from "../../components/Loading";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -46,8 +47,7 @@ const ManageUsers = () => {
     }
   };
 
-  if (loading)
-    return <p className="text-center mt-16 text-gray-500">Loading users...</p>;
+  if (loading) return <Loading />;
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">

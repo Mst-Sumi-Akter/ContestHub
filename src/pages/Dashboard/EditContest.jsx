@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
+import Loading from "../../components/Loading";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
@@ -75,8 +76,7 @@ const EditContest = () => {
     }
   };
 
-  if (loading)
-    return <p className="text-center mt-10">Loading contest...</p>;
+  if (loading) return <Loading />;
 
   if (!contest)
     return <p className="text-center mt-10 text-red-500">Contest not found</p>;

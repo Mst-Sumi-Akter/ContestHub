@@ -5,7 +5,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { AuthContext } from "../../context/AuthContext";
-
 const AddContest = () => {
   const { token, user } = useContext(AuthContext);
   const {

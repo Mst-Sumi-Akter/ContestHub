@@ -12,6 +12,7 @@ import Register from "../pages/Register";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "../router/ProtectedRoute";
 import Leaderboard from "../components/Leaderboard";
+import Contact from "../pages/Contact";
 
 // Dashboard child pages
 import MyParticipated from "../pages/Dashboard/MyParticipated";
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
         ],
       },
       { path: "/leaderboard", element: <Leaderboard /> },
+      { path: "/contact", element: <Contact /> },
       { path: "/login", element: <Login /> },
       { path: "/register", element: <Register /> },
       { path: "*", element: <NotFound /> },
