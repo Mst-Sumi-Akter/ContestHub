@@ -2,7 +2,7 @@
 
 A modern, platform that allows users to create, discover, participate in, and manage creative contests.
 
-🔗 **Live Site URL:** [Insert Live Link Here]
+🔗 **Live Site URL:** [https://fantastic-cucurucho-3fa98b.netlify.app]
 
 ## ✨ Features
 

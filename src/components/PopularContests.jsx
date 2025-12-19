@@ -41,7 +41,7 @@ const PopularContests = () => {
           sortedContests.map((c) => {
             const isActive = new Date(c.endDate) > new Date();
 
-            // ✅ Check if winner is already declared
+            // Check if winner is already declared
             const isWinnerDeclared = c.submissions?.some(sub => sub.status === "winner");
 
             return (
