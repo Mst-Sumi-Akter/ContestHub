@@ -5,8 +5,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { AuthContext } from "../../context/AuthContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 const AddContest = () => {
   const { token, user } = useContext(AuthContext);
+  const queryClient = useQueryClient();
   const {
     register,
     handleSubmit,
@@ -16,10 +19,29 @@ const AddContest = () => {
   } = useForm();
 
   const [deadline, setDeadline] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+
+  const addMutation = useMutation({
+    mutationFn: async (contestData) => {
+      await axios.post(`${API_URL}/contests`, contestData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["my-created", user?.email]);
+      queryClient.invalidateQueries(["contests"]);
+      toast.success("Contest created successfully!", { id: "contest-action" });
+      reset();
+      setDeadline(new Date());
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || "Failed to create contest");
+    },
+  });
+
+  const loading = addMutation.isPending;
 
   const imageURL = watch("image");
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
   // Role Guard
   if (user?.role !== "creator") {
@@ -30,15 +52,12 @@ const AddContest = () => {
     );
   }
 
-  const onSubmit = async (data) => {
-    if (!token) {
-      toast.error("Login required");
-      return;
-    }
+  const onSubmit = (data) => {
+    if (!token) return toast.error("Login required");
 
     const contestData = {
       title: data.title,
-      category: data.category, // changed from contestType → category
+      category: data.category,
       image: data.image,
       description: data.description,
       price: Number(data.price),
@@ -50,21 +69,7 @@ const AddContest = () => {
       isActive: data.isActive || false,
     };
 
-    try {
-      setLoading(true);
-      await axios.post(`${API_URL}/contests`, contestData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      toast.success("Contest created successfully!", { id: "contest-action" });
-      reset();
-      setDeadline(new Date());
-    } catch (err) {
-      console.error(err);
-      toast.error(err?.response?.data?.message || "Failed to create contest");
-    } finally {
-      setLoading(false);
-    }
+    addMutation.mutate(contestData);
   };
 
   return (

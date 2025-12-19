@@ -1,48 +1,39 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Loading from "../../components/Loading";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const PAGE_SIZE = 10;
+
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const MyParticipated = () => {
   const { user, token } = useContext(AuthContext);
-  const [contests, setContests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    if (!user?.email || !token) return;
+  const { data: contests = [], isLoading } = useQuery({
+    queryKey: ["my-participated", user?.email],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/contests`);
+      const data = res.data || [];
+      const participated = data.filter((c) => {
+        if (Array.isArray(c.participants)) {
+          return c.participants.some((p) =>
+            typeof p === "string" ? p === user.email : p.email === user.email
+          );
+        }
+        return false;
+      });
+      return participated.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+    },
+    enabled: !!user?.email && !!token,
+  });
 
-    const fetchContests = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/contests`);
-        const data = res.data || [];
+  const totalPages = Math.ceil(contests.length / PAGE_SIZE);
+  const paginatedContests = contests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-        // Filter contests where user participated
-        const participated = data.filter((c) => {
-          if (Array.isArray(c.participants)) {
-            return c.participants.some((p) =>
-              typeof p === "string" ? p === user.email : p.email === user.email
-            );
-          }
-          return false;
-        });
-
-        // Sort by upcoming deadline
-        participated.sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
-
-        setContests(participated);
-      } catch (err) {
-        console.error("Error fetching contests:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContests();
-  }, [user?.email, token]);
-
-  if (loading) return <Loading />;
+  if (isLoading) return <Loading />;
 
   if (contests.length === 0)
     return (
@@ -57,7 +48,7 @@ const MyParticipated = () => {
         My Participated Contests
       </h1>
       <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {contests.map((contest) => {
+        {paginatedContests.map((contest) => {
           const participant = Array.isArray(contest.participants)
             ? contest.participants.find((p) =>
               typeof p === "string" ? p === user.email : p.email === user.email
@@ -93,11 +84,8 @@ const MyParticipated = () => {
                     {contest.category}
                   </span>
                 </p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                  Reward:{" "}
-                  <span className="font-medium text-gray-700 dark:text-gray-200">
-                    {contest.reward}
-                  </span>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 text-indigo-600 font-bold">
+                  Reward: {contest.reward}
                 </p>
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${paymentStatus === "paid"
@@ -112,6 +100,22 @@ const MyParticipated = () => {
           );
         })}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-12 gap-2">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`px-4 py-2 rounded-lg border transition ${page === i + 1 ? "bg-indigo-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

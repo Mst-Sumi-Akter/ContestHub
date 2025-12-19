@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 /* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext();
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -55,7 +55,7 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
     if (!storedToken) {
-      
+
       return;
     }
 

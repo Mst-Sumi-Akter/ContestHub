@@ -7,79 +7,84 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const EditContest = () => {
   const { token, user } = useContext(AuthContext);
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [contest, setContest] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
   const [deadline, setDeadline] = useState(new Date());
 
-  // ================= FETCH CONTEST =================
+  const { data: contest, isLoading, isError } = useQuery({
+    queryKey: ["contest", id],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/contests/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.endDate) setDeadline(new Date(res.data.endDate));
+      return res.data;
+    },
+    enabled: !!id && !!token,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      await axios.put(
+        `${API_URL}/contests/${id}`,
+        { ...updatedData, endDate: deadline },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["my-created", user?.email]);
+      queryClient.invalidateQueries(["contest", id]);
+      toast.success("Contest updated successfully", { id: "contest-action" });
+      navigate("/dashboard/my-created");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Update failed");
+    },
+  });
+
+  const updating = updateMutation.isPending;
+
+  // Local state for form (mirroring contest)
+  const [formData, setFormData] = useState(null);
+
   useEffect(() => {
-    if (!id || !token) return;
+    if (contest && !formData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFormData(contest);
+    }
+  }, [contest, formData]);
 
-    const fetchContest = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/contests/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  if (isLoading) return <Loading />;
+  if (isError || !contest) return <p className="text-center mt-10 text-red-500">Contest not found</p>;
+  if (!formData) return null;
 
-        // Only creator can edit
-        if (res.data.creatorEmail !== user.email) {
-          toast.error("You are not allowed to edit this contest");
-          return navigate("/dashboard/my-created");
-        }
+  // ================= FETCH CONTEST =================
 
-        setContest(res.data);
-        if (res.data.endDate) setDeadline(new Date(res.data.endDate));
-      } catch {
-        toast.error("Failed to load contest data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContest();
-  }, [id, token, user, navigate]);
 
   // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setContest((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // ================= SUBMIT =================
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      setUpdating(true);
-      await axios.put(
-        `${API_URL}/contests/${id}`,
-        { ...contest, endDate: deadline },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Contest updated successfully", { id: "contest-action" });
-      navigate("/dashboard/my-created");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
-    } finally {
-      setUpdating(false);
-    }
+    updateMutation.mutate(formData);
   };
 
-  if (loading) return <Loading />;
 
-  if (!contest)
-    return <p className="text-center mt-10 text-red-500">Contest not found</p>;
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
@@ -196,7 +201,7 @@ const EditContest = () => {
           <label>Task Instruction *</label>
           <textarea
             name="taskInstruction"
-            value={contest.taskInstruction || ""}
+            value={formData.taskInstruction || ""}
             onChange={handleChange}
             rows={4}
             className="input"

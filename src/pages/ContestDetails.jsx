@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-/* eslint-disable no-unused-vars */
+import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import PaymentModal from "../components/PaymentModal";
 import toast from "react-hot-toast";
@@ -21,82 +21,82 @@ const calculateTimeLeft = (endDate) => {
     };
 };
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const ContestDetails = () => {
     const { user, loading: authLoading, token } = useContext(AuthContext);
     const { id } = useParams();
     const navigate = useNavigate();
-
-    const [contest, setContest] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const queryClient = useQueryClient();
 
     const [timeLeft, setTimeLeft] = useState(null);
-    const [registered, setRegistered] = useState(false);
-    const [hasSubmitted, setHasSubmitted] = useState(false);
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [submission, setSubmission] = useState("");
-
-    // Payment State
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-    // Redirect if not logged in
-    useEffect(() => {
-        if (!authLoading && !user) {
-            // Don't redirect immediately on load, only on action interaction usually, 
-            // but if page is protected, this is fine. 
-            // User context might load after page load slightly.
-        }
-    }, [authLoading, user]);
-
     // Fetch contest data
-    useEffect(() => {
-        // We can allow public view, so don't return if !user or !token immediately unless private
-        const fetchContest = async () => {
-            try {
-                setLoading(true);
-                // Public endpoint if supported, or protected. Based on existing code it was protected.
-                // Let's rely on token if available, but for details it should ideally be public?
-                // Existing code used token for headers.
-                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const { data: contest, isLoading, error: queryError } = useQuery({
+        queryKey: ["contest", id],
+        queryFn: async () => {
+            const res = await axios.get(`${API_URL}/contests/${id}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const data = res.data;
+            data.participants = data.participants || [];
+            data.submissions = data.submissions || [];
+            return data;
+        },
+        enabled: !!id,
+    });
 
-                const res = await fetch(`${API_URL}/contests/${id}`, { headers });
+    const registered = user && (user.role === "admin" || user.role === "creator" || contest?.participants?.includes(user.email));
+    const hasSubmitted = user && (user.role === "admin" || user.role === "creator" || contest?.submissions?.some((s) => s.userEmail === user.email));
 
-                if (!res.ok) throw new Error("Failed to fetch contest");
-                const data = await res.json();
+    // Registration Mutation
+    const registerMutation = useMutation({
+        mutationFn: async () => {
+            await axios.post(`${API_URL}/contests/${id}/register`, {}, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["contest", id]);
+            toast.success("Successfully Registered!");
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || "Registration failed");
+        },
+    });
 
-                data.participants = data.participants || [];
-                data.submissions = data.submissions || [];
-
-                setContest(data);
-
-                // Check user status
-                if (user) {
-                    if (user.role === "admin" || user.role === "creator") {
-                        setRegistered(true);
-                        setHasSubmitted(true);
-                    } else {
-                        setRegistered(data.participants.includes(user.email));
-                        setHasSubmitted(data.submissions.some((s) => s.userEmail === user.email));
-                    }
-                }
-
-                setTimeLeft(calculateTimeLeft(data.endDate));
-                setError(null);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchContest();
-    }, [id, user, authLoading, token]);
+    // Submission Mutation
+    const submitTaskMutation = useMutation({
+        mutationFn: async (text) => {
+            await axios.post(`${API_URL}/contests/${id}/submit-task`,
+                { submission: text },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["contest", id]);
+            setShowSubmitModal(false);
+            setSubmission("");
+            toast.success("Task submitted successfully!");
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || "Submission failed");
+        },
+    });
 
     // Countdown timer
     useEffect(() => {
         if (!contest) return;
+
+        // Update immediately
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setTimeLeft(calculateTimeLeft(contest.endDate));
+
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft(contest.endDate));
         }, 1000);
@@ -114,66 +114,25 @@ const ContestDetails = () => {
         if (contest.price && contest.price > 0) {
             setIsPaymentModalOpen(true);
         } else {
-            registerUser();
-        }
-    };
-
-    const registerUser = async () => {
-        try {
-            const res = await fetch(`${API_URL}/contests/${id}/register`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) throw new Error("Registration failed");
-
-            setRegistered(true);
-            setContest((prev) => ({
-                ...prev,
-                participants: [...prev.participants, user.email],
-            }));
-            toast.success("Successfully Registered!", { id: "registration" });
-        } catch (err) {
-            toast.error(err.message);
+            registerMutation.mutate();
         }
     };
 
     const handlePaymentSuccess = () => {
         setIsPaymentModalOpen(false);
-        registerUser();
+        registerMutation.mutate();
     };
 
     // Submit task (normal user only, once)
     const handleSubmitTask = async () => {
         if (user.role === "admin" || user.role === "creator") return;
         if (!submission.trim()) return toast.error("Submission cannot be empty");
-
-        try {
-            const res = await fetch(`${API_URL}/contests/${id}/submit-task`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ submission }),
-            });
-
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.message || "Submission failed");
-            }
-
-            setHasSubmitted(true);
-            setShowSubmitModal(false);
-            setSubmission("");
-            toast.success("Task submitted successfully!");
-        } catch (err) {
-            toast.error(err.message);
-        }
+        submitTaskMutation.mutate(submission);
     };
 
-    if (authLoading || loading) return <Loading />;
+    if (authLoading || isLoading) return <Loading />;
 
-    if (error) return <p className="text-center text-red-600">{error}</p>;
+    if (queryError) return <p className="text-center text-red-600">{queryError.message}</p>;
     if (!contest) return <p className="text-center">Contest not found</p>;
 
     const ended = !timeLeft;
@@ -302,9 +261,9 @@ const ContestDetails = () => {
                                 <button
                                     onClick={handleSubmitTask}
                                     className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-500/30"
-                                    disabled={hasSubmitted}
+                                    disabled={submitTaskMutation.isPending}
                                 >
-                                    Submit
+                                    {submitTaskMutation.isPending ? "Submitting..." : "Submit"}
                                 </button>
                             </div>
                         </motion.div>

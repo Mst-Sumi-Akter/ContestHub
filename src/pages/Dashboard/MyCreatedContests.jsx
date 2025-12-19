@@ -1,53 +1,59 @@
-import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import axios from "axios";
+import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "../../components/Loading";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const PAGE_SIZE = 10;
+
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const MyCreatedContests = () => {
     const { user, token } = useContext(AuthContext);
-    const [contests, setContests] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const [page, setPage] = useState(1);
 
-    const fetchMyContests = async () => {
-        try {
+    const { data: contests = [], isLoading } = useQuery({
+        queryKey: ["my-created", user?.email],
+        queryFn: async () => {
             const res = await axios.get(`${API_URL}/contests`);
             const data = res.data || [];
-            // Filter by creator email
-            const myContests = data.filter((c) => c.creatorEmail === user.email);
-            setContests(myContests);
-        } catch (err) {
-            console.error("Error fetching created contests:", err);
-            toast.error("Failed to load your contests");
-        } finally {
-            setLoading(false);
-        }
-    };
+            return data.filter((c) => c.creatorEmail === user.email);
+        },
+        enabled: !!user?.email && !!token,
+    });
 
-    useEffect(() => {
-        if (user?.email && token) {
-            fetchMyContests();
-        }
-    }, [user?.email, token]);
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this contest?")) return;
-
-        try {
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
             await axios.delete(`${API_URL}/contests/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["my-created", user?.email]);
             toast.success("Contest deleted successfully");
-            setContests(prev => prev.filter(c => c._id !== id));
-        } catch (err) {
-            toast.error(err.response?.data?.message || "Failed to delete contest");
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.message || "Deletion failed");
+        },
+    });
+
+    const handleDelete = (id) => {
+        if (window.confirm("Are you sure you want to delete this contest?")) {
+            deleteMutation.mutate(id);
         }
     };
 
-    if (loading) return <Loading />;
+    const totalPages = Math.ceil(contests.length / PAGE_SIZE);
+    const paginatedContests = contests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    if (isLoading) return <Loading />;
+
+
+
+
 
     if (contests.length === 0)
         return (
@@ -69,7 +75,7 @@ const MyCreatedContests = () => {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {contests.map((contest) => (
+                {paginatedContests.map((contest) => (
                     <div key={contest._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border dark:border-gray-700">
                         <img src={contest.image} alt={contest.title} className="w-full h-40 object-cover" />
                         <div className="p-5">
@@ -84,16 +90,38 @@ const MyCreatedContests = () => {
                             <div className="flex justify-between items-center mt-4">
                                 <div className="space-x-2">
                                     <Link to={`/dashboard/edit-contest/${contest._id}`} className="text-blue-600 hover:underline text-sm font-medium">Edit</Link>
-                                    <button onClick={() => handleDelete(contest._id)} className="text-red-600 hover:underline text-sm font-medium">Delete</button>
+                                    <button
+                                        onClick={() => handleDelete(contest._id)}
+                                        disabled={deleteMutation.isPending}
+                                        className="text-red-600 hover:underline text-sm font-medium disabled:opacity-50"
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                                 <Link to={`/dashboard/submitted-tasks?contestId=${contest._id}`} className="text-indigo-600 hover:underline text-sm font-medium">
-                                    View Submissions
+                                    Submissions
                                 </Link>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center mt-12 gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setPage(i + 1)}
+                            className={`px-4 py-2 rounded-lg border transition ${page === i + 1 ? "bg-indigo-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,26 +1,41 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import Loading from "./Loading";
 
-const recentWinners = [
-  {
-    name: "Alice Johnson",
-    prize: "$500",
-    image: "https://images.unsplash.com/photo-1617718860170-dd5d9f2ed43d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG1hbiUyMGltYWdlfGVufDB8fDB8fHww",
-  },
-  {
-    name: "Mark Wilson",
-    prize: "$300",
-    image: "https://media.istockphoto.com/id/2215351889/photo/smiling-adult-businessman-working-on-his-laptop-at-an-outdoor-cafe-in-the-city.webp?a=1&b=1&s=612x612&w=0&k=20&c=lRSNdvPV-Psl7zMzeKk2Sss8zi5qL4W1JMA7gGQGLJo=",
-  },
-  {
-    name: "Sophia Lee",
-    prize: "$200",
-    image: "https://images.unsplash.com/photo-1664575602554-2087b04935a5?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8d29tYW58ZW58MHx8MHx8fDA%3D",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const WinnerAdvertisement = () => {
   const navigate = useNavigate();
+
+  const { data: winners = [], isLoading } = useQuery({
+    queryKey: ["winners-ads"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/leaderboard`);
+      return res.data.slice(0, 3);
+    }
+  });
+
+  if (isLoading) return null;
+
+  const displayWinners = winners.length > 0 ? winners : [
+    {
+      name: "Top Talent",
+      points: "10+",
+      photoURL: "https://images.unsplash.com/photo-1617718860170-dd5d9f2ed43d?fm=jpg&q=60&w=3000",
+    },
+    {
+      name: "Master Creator",
+      points: "5+",
+      photoURL: "https://media.istockphoto.com/id/2215351889/photo/smiling-adult-businessman-working-on-his-laptop-at-an-outdoor-cafe-in-the-city.webp",
+    },
+    {
+      name: "Rising Star",
+      points: "3+",
+      photoURL: "https://images.unsplash.com/photo-1664575602554-2087b04935a5?fm=jpg&q=60&w=3000",
+    },
+  ];
 
   const handleExploreContests = () => {
     navigate("/all-contests"); // Redirect to All Contests page
@@ -40,21 +55,21 @@ const WinnerAdvertisement = () => {
 
       {/* Winner Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recentWinners.map((winner, idx) => (
+        {displayWinners.map((winner, idx) => (
           <div
             key={idx}
-            className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center hover:shadow-xl transition"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col items-center text-center hover:shadow-xl transition dark:border dark:border-gray-700"
           >
             <img
-              src={winner.image}
+              src={winner.photoURL || winner.image}
               alt={winner.name}
-              className="w-24 h-24 rounded-full mb-4 object-cover"
+              className="w-24 h-24 rounded-full mb-4 object-cover border-4 border-indigo-100 dark:border-indigo-900"
             />
-            <h3 className="text-xl font-semibold text-indigo-600">{winner.name}</h3>
-            <p className="text-gray-500 mb-2">
-              Prize: <span className="font-bold">{winner.prize}</span>
+            <h3 className="text-xl font-semibold text-indigo-600 dark:text-indigo-400">{winner.name}</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
+              Wins: <span className="font-bold">{winner.points || winner.prize}</span>
             </p>
-            <p className="text-gray-400 text-sm">We celebrate every achievement!</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">We celebrate every achievement!</p>
           </div>
         ))}
       </div>

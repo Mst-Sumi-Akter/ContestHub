@@ -5,7 +5,7 @@ import { FcGoogle } from "react-icons/fc";
 import toast from "react-hot-toast";
 
 const Register = () => {
-  const { googleLogin, user, loading } = useContext(AuthContext);
+  const { googleLogin, user, loading, registerUser } = useContext(AuthContext);
   const [formLoading, setFormLoading] = useState(false);
   const [role, setRole] = useState("user"); // default role
 
@@ -36,18 +36,9 @@ const Register = () => {
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role, photoURL, bio }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Registration failed");
-
-      localStorage.setItem("authToken", data.token); // save token
+      await registerUser({ name, email, password, role, photoURL, bio });
       toast.success("Registration successful!", { id: "auth" });
-      navigate("/"); // redirect to home
+      navigate("/");
     } catch (err) {
       toast.error(err.message, { id: "auth" });
     } finally {

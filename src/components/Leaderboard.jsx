@@ -1,38 +1,19 @@
-import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import Loading from "./Loading";
 
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
+
 const Leaderboard = () => {
-  const [leaders, setLeaders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: leaders = [], isLoading } = useQuery({
+    queryKey: ["leaderboard"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/leaderboard`);
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    const fetchLeaders = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/leaderboard");
-        if (!res.ok) throw new Error("Failed to fetch leaderboard");
-
-        const data = await res.json();
-
-        //  normal users 
-        const filteredLeaders = data.filter(
-          leader => leader.role !== "creator" && leader.role !== "admin"
-        );
-
-        // points descending sort
-        filteredLeaders.sort((a, b) => b.points - a.points);
-
-        setLeaders(filteredLeaders);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaders();
-  }, []);
-
-  if (loading) return <Loading />;
+  if (isLoading) return <Loading />;
 
   return (
     <div className="max-w-5xl mx-auto p-6">
@@ -64,16 +45,31 @@ const Leaderboard = () => {
                     {idx + 1}
                   </td>
                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">
-                    {leader.name}
+                    <div className="flex items-center justify-center gap-3">
+                      {leader.photoURL ? (
+                        <img
+                          src={leader.photoURL}
+                          alt={leader.name}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-indigo-200"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-bold">
+                          {leader.name?.charAt(0)}
+                        </div>
+                      )}
+                      <span className="font-medium text-gray-700 dark:text-gray-200">
+                        {leader.name}
+                      </span>
+                    </div>
                   </td>
                   <td className="border border-gray-300 dark:border-gray-600 px-4 py-3">
                     <span
-                      className="px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100"
+                      className="px-3 py-1 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300"
                     >
                       {leader.role}
                     </span>
                   </td>
-                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 font-semibold text-indigo-600">
+                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 font-bold text-lg text-indigo-600 dark:text-indigo-400">
                     {leader.points}
                   </td>
                 </tr>

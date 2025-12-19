@@ -1,7 +1,9 @@
-import React, { useEffect, useState, useMemo, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useContext } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Loading from "../components/Loading";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 
 // Pagination size
 const PAGE_SIZE = 6;
@@ -10,15 +12,14 @@ const PAGE_SIZE = 6;
 const truncate = (text, n = 120) =>
     text && text.length > n ? text.slice(0, n) + "..." : text;
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const AllContests = () => {
-    const { user, token } = useContext(AuthContext); // user context
-    const [contests, setContests] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { token } = useContext(AuthContext); // removed unused user
+    const [searchParams] = useSearchParams(); // removed unused setSearchParams
+    const initialSearch = searchParams.get("search") || "";
 
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(initialSearch);
     const [activeTab, setActiveTab] = useState("All");
     const [page, setPage] = useState(1);
 
@@ -27,25 +28,16 @@ const AllContests = () => {
 
     const navigate = useNavigate();
 
-    // Fetch contests
-    useEffect(() => {
-        const fetchContests = async () => {
-            setLoading(true);
-            try {
-                const res = await fetch(`${API_URL}/contests`, {
-                    headers: user ? { Authorization: `Bearer ${token}` } : undefined,
-                });
-                if (!res.ok) throw new Error("Failed to fetch contests");
-                const data = await res.json();
-                setContests(data);
-            } catch (err) {
-                setError(err.message || "Something went wrong");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchContests();
-    }, [user, token]);
+    const { data: contests = [], isLoading, error: queryError } = useQuery({
+        queryKey: ["contests", activeTab, search],
+        queryFn: async () => {
+            const res = await axios.get(`${API_URL}/contests`, {
+                params: { category: activeTab, search },
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            });
+            return res.data;
+        },
+    });
 
     // Categories for tabs
     const categories = useMemo(() => {
@@ -71,15 +63,15 @@ const AllContests = () => {
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+    if (isLoading) return <Loading />;
 
-    if (loading) return <Loading />;
-
-    if (error)
+    if (queryError)
         return (
             <div className="min-h-[60vh] flex justify-center items-center text-red-600">
-                {error}
+                {queryError.message || "Something went wrong"}
             </div>
         );
+
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">

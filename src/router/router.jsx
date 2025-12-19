@@ -24,6 +24,7 @@ import AddContest from "../pages/Dashboard/AddContest";
 import MyCreatedContests from "../pages/Dashboard/MyCreatedContests";
 import SubmittedTasks from "../pages/Dashboard/SubmittedTasks";
 import EditContest from "../pages/Dashboard/EditContest";
+import Packages from "../pages/Dashboard/Packages";
 
 export const router = createBrowserRouter([
   {
@@ -58,8 +59,7 @@ export const router = createBrowserRouter([
           { path: "my-created", element: <MyCreatedContests /> },
           { path: "submitted-tasks", element: <SubmittedTasks /> },
           { path: "edit-contest/:id", element: <EditContest /> },
-
-
+          { path: "packages", element: <Packages /> },
         ],
       },
       { path: "/leaderboard", element: <Leaderboard /> },

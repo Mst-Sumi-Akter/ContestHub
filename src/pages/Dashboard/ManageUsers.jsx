@@ -1,53 +1,58 @@
+import React, { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import React, { useContext, useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import toast from "react-hot-toast";
 import Loading from "../../components/Loading";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
+
+const PAGE_SIZE = 10;
 
 const ManageUsers = () => {
   const { token } = useContext(AuthContext);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
 
   // Fetch users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!token) return;
-      try {
-        const res = await axios.get(`${API_URL}/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUsers(res.data || []);
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data: usersData = [], isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data || [];
+    },
+    enabled: !!token,
+  });
 
-    fetchUsers();
-  }, [token]);
-
-  // Change user role
-  const handleRoleChange = async (userId, newRole) => {
-    try {
+  // Mutate Role
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }) => {
       await axios.put(
         `${API_URL}/users/${userId}/role`,
-        { role: newRole },
+        { role },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUsers((prev) =>
-        prev.map((user) =>
-          user._id === userId ? { ...user, role: newRole } : user
-        )
-      );
-    } catch (err) {
-      console.error("Error updating role:", err);
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+      toast.success("Role updated successfully");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Role update failed");
+    },
+  });
+
+  const handleRoleChange = (userId, newRole) => {
+    roleMutation.mutate({ userId, role: newRole });
   };
 
-  if (loading) return <Loading />;
+  // Pagination
+  const totalPages = Math.ceil(usersData.length / PAGE_SIZE);
+  const paginatedUsers = usersData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (isLoading) return <Loading />;
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
@@ -65,17 +70,21 @@ const ManageUsers = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {paginatedUsers.map((user) => (
               <tr
                 key={user._id}
                 className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <td className="px-6 py-4 border-b">{user.name}</td>
+                <td className="px-6 py-4 border-b flex items-center gap-3">
+                  <img src={user.photoURL || "https://i.ibb.co/4pDNDk1/avatar.png"} className="w-8 h-8 rounded-full" />
+                  {user.name}
+                </td>
                 <td className="px-6 py-4 border-b">{user.email}</td>
-                <td className="px-6 py-4 border-b font-medium">{user.role}</td>
+                <td className="px-6 py-4 border-b font-medium capitalize">{user.role}</td>
                 <td className="px-6 py-4 border-b">
                   <select
                     value={user.role}
+                    disabled={roleMutation.isPending}
                     onChange={(e) =>
                       handleRoleChange(user._id, e.target.value)
                     }
@@ -91,6 +100,22 @@ const ManageUsers = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8 gap-2">
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i + 1)}
+              className={`px-4 py-2 rounded-lg border transition ${page === i + 1 ? "bg-indigo-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,113 +1,90 @@
-import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import React, { useState, useContext } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import Loading from "../../components/Loading";
-import { Pie } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import toast from "react-hot-toast";
+import { AuthContext } from "../../context/AuthContext";
+import Loading from "../../components/Loading";
 import logo from "../../assets/logo.jpg";
+import { Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const MyProfile = () => {
-  const { user, token, setUser, contestStatsUpdated } = useContext(AuthContext);
+  const { user, token, setUser } = useContext(AuthContext);
 
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [photoURL, setPhotoURL] = useState("");
   const [bio, setBio] = useState("");
-  const [role, setRole] = useState("");
-  const [participated, setParticipated] = useState(0);
-  const [won, setWon] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+  // Fetch Profile
+  const { isLoading: profileLoading } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data || {};
+      setName(data.name || "");
+      setPhotoURL(data.photoURL || "");
+      setBio(data.bio || "");
+      if (setUser) setUser(prev => ({ ...prev, ...data }));
+      return data;
+    },
+    enabled: !!token,
+  });
 
-      try {
-        const res = await axios.get(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = res.data || {};
-        setName(data.name || "");
-        setPhotoURL(data.photoURL || "");
-        setBio(data.bio || "");
-        setRole(data.role || "User");
-
-        if (setUser) setUser(prev => ({ ...prev, ...data }));
-      } catch (err) {
-        console.error("Profile fetch error:", err?.response?.data || err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [token, setUser]);
-
-  // Fetch contest stats
-  useEffect(() => {
-    const fetchContests = async () => {
-      if (!token || !user?.email) return;
-
-      try {
-        const res = await axios.get(`${API_URL}/contests`);
-        const contests = res.data || [];
-
-        const participatedList = contests.filter(
-          c => Array.isArray(c.participants) && c.participants.includes(user.email)
-        );
-        const wonList = contests.filter(
-          c => Array.isArray(c.submissions) && c.submissions.some(s => s.userEmail === user.email && s.status === "winner")
-        );
-
-        setParticipated(participatedList.length);
-        setWon(wonList.length);
-      } catch (err) {
-        console.error("Contest fetch error:", err?.response?.data || err.message);
-      }
-    };
-
-    fetchContests();
-  }, [token, user?.email, contestStatsUpdated]);
-
-  // Update profile
-  const handleUpdate = async () => {
-    if (!token) return setError("Login required");
-    if (!user?.email) return setError("User info missing");
-
-    if (name === user?.name && photoURL === user?.photoURL && bio === user?.bio) return;
-
-    try {
-      setUpdating(true);
-      setError("");
-
-      const res = await axios.put(
-        `${API_URL}/auth/me`,
-        { name, photoURL, bio },
-        { headers: { Authorization: `Bearer ${token}` } }
+  // Fetch Stats
+  const { data: stats = { participated: 0, won: 0 }, isLoading: statsLoading } = useQuery({
+    queryKey: ["user-stats", user?.email],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/contests`);
+      const contests = res.data || [];
+      const participatedList = contests.filter(
+        c => Array.isArray(c.participants) && c.participants.includes(user.email)
       );
+      const wonList = contests.filter(
+        c => Array.isArray(c.submissions) && c.submissions.some(s => s.userEmail === user.email && s.status === "winner")
+      );
+      return { participated: participatedList.length, won: wonList.length };
+    },
+    enabled: !!user?.email && !!token,
+  });
 
-      if (res.data && setUser) setUser(prev => ({ ...prev, ...res.data }));
-      toast.success("Profile updated successfully", { id: "profile-update" });
-    } catch (err) {
-      console.error("Profile update failed:", err?.response?.data || err.message);
-      setError(err?.response?.data?.message || "Update failed");
-      toast.error("Failed to update profile");
-    } finally {
-      setUpdating(false);
-    }
+  const participated = stats.participated;
+  const won = stats.won;
+
+  // Update Profile Mutation
+  const updateMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      const res = await axios.put(`${API_URL}/auth/me`, updatedData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (setUser) setUser(prev => ({ ...prev, ...data }));
+      queryClient.invalidateQueries(["auth-me"]);
+      toast.success("Profile updated successfully");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Update failed");
+    },
+  });
+
+  const handleUpdate = () => {
+    updateMutation.mutate({ name, photoURL, bio });
   };
 
-  if (loading) return <Loading />;
+  if (profileLoading || statsLoading) return <Loading />;
 
   const winPercentage = participated ? Math.round((won / participated) * 100) : 0;
   const chartData = {
@@ -137,7 +114,7 @@ const MyProfile = () => {
         <div>
           <h2 className="text-xl font-semibold">{name || "User"}</h2>
           <p className="text-gray-500">{user?.email}</p>
-          {role && <p className="text-gray-600 mt-2">{role}</p>}
+          {user?.role && <p className="text-gray-600 mt-2 capitalize">{user.role}</p>}
         </div>
       </div>
 
@@ -170,16 +147,16 @@ const MyProfile = () => {
           />
         </div>
 
-        {error && <p className="md:col-span-2 text-red-500">{error}</p>}
+
 
         <div className="md:col-span-2 text-right">
           <button
             onClick={handleUpdate}
-            disabled={updating || !isChanged}
-            className={`px-6 py-2 rounded text-white ${updating || !isChanged ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+            disabled={updateMutation.isPending || !isChanged}
+            className={`px-6 py-2 rounded text-white ${updateMutation.isPending || !isChanged ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
               }`}
           >
-            {updating ? "Updating..." : "Update Profile"}
+            {updateMutation.isPending ? "Updating..." : "Update Profile"}
           </button>
         </div>
       </div>

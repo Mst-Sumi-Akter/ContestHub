@@ -1,27 +1,20 @@
-import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import Loading from "./Loading";
+
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const PopularContests = () => {
   const navigate = useNavigate();
-  const [contests, setContests] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch contests
-  useEffect(() => {
-    const fetchContests = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/contests`);
-        const data = await res.json();
-        setContests(data);
-      } catch (err) {
-        console.error("Error fetching contests:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchContests();
-  }, []);
+  const { data: contests = [], isLoading } = useQuery({
+    queryKey: ["popular-contests"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/contests`);
+      return res.data;
+    },
+  });
 
   const sortedContests = [...contests]
     .sort((a, b) => (b.participants?.length || 0) - (a.participants?.length || 0))
@@ -29,13 +22,13 @@ const PopularContests = () => {
 
   const handleShowAll = () => navigate("/all-contests");
 
-  if (loading) return <Loading />;
+  if (isLoading) return <Loading />;
 
   return (
     <div className="popular-contests py-20 px-4 max-w-7xl mx-auto">
 
       <div className="text-center mb-16">
-        <h2 className="heading-primary  text-3xl md:text-5xl mb-4">
+        <h2 className="heading-primary text-3xl md:text-5xl mb-4">
           🔥 Popular Contests
         </h2>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -47,6 +40,9 @@ const PopularContests = () => {
         {sortedContests.length > 0 ? (
           sortedContests.map((c) => {
             const isActive = new Date(c.endDate) > new Date();
+
+            // ✅ Check if winner is already declared
+            const isWinnerDeclared = c.submissions?.some(sub => sub.status === "winner");
 
             return (
               <div
@@ -62,14 +58,21 @@ const PopularContests = () => {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{c.title}</h3>
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded ${isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                        }`}
+                      className={`px-2 py-1 text-xs font-semibold rounded ${
+                        isWinnerDeclared
+                          ? "bg-yellow-100 text-yellow-800"
+                          : isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
                     >
-                      {isActive ? "Active" : "Ended"}
+                      {isWinnerDeclared ? "Winner Selected" : isActive ? "Active" : "Ended"}
                     </span>
                   </div>
 
-                  <p className="text-gray-500 dark:text-gray-400 mb-2 flex-1">{c.description ? (c.description.length > 100 ? c.description.slice(0, 100) + "..." : c.description) : ""}</p>
+                  <p className="text-gray-500 dark:text-gray-400 mb-2 flex-1">
+                    {c.description ? (c.description.length > 100 ? c.description.slice(0, 100) + "..." : c.description) : ""}
+                  </p>
 
                   <div className="mb-4 text-sm text-gray-500">
                     <p>Reward: <span className="font-medium text-gray-700 dark:text-gray-200">{c.reward ?? "—"}</span></p>

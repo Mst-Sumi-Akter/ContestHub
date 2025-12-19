@@ -1,45 +1,38 @@
-import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../context/AuthContext";
+import React, { useState, useContext } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { AuthContext } from "../../context/AuthContext";
 import Loading from "../../components/Loading";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const PAGE_SIZE = 10;
+
+const API_URL = import.meta.env.VITE_API_URL || "https://contest-hub-server-gamma-drab.vercel.app";
 
 const MyWinning = () => {
     const { user, token } = useContext(AuthContext);
-    const [contests, setContests] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
 
-    useEffect(() => {
-        if (!user?.email || !token) return;
+    const { data: contests = [], isLoading } = useQuery({
+        queryKey: ["my-winning", user?.email],
+        queryFn: async () => {
+            const res = await axios.get(`${API_URL}/contests`);
+            const data = res.data || [];
+            return data.filter((c) => {
+                if (Array.isArray(c.submissions)) {
+                    return c.submissions.some(
+                        (s) => s.userEmail === user.email && s.status === "winner"
+                    );
+                }
+                return false;
+            });
+        },
+        enabled: !!user?.email && !!token,
+    });
 
-        const fetchWinningContests = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/contests`);
-                const data = res.data || [];
+    const totalPages = Math.ceil(contests.length / PAGE_SIZE);
+    const paginatedContests = contests.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-                // Filter contests where user is a winner
-                const winners = data.filter((c) => {
-                    if (Array.isArray(c.submissions)) {
-                        return c.submissions.some(
-                            (s) => s.userEmail === user.email && s.status === "winner"
-                        );
-                    }
-                    return false;
-                });
-
-                setContests(winners);
-            } catch (err) {
-                console.error("Error fetching winning contests:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchWinningContests();
-    }, [user?.email, token]);
-
-    if (loading) return <Loading />;
+    if (isLoading) return <Loading />;
 
     if (contests.length === 0)
         return (
@@ -59,7 +52,7 @@ const MyWinning = () => {
                 My Winning Contests 🏆
             </h1>
             <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {contests.map((contest) => (
+                {paginatedContests.map((contest) => (
                     <div
                         key={contest._id}
                         className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden border-2 border-yellow-400 dark:border-yellow-600"
@@ -90,6 +83,22 @@ const MyWinning = () => {
                     </div>
                 ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center mt-12 gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setPage(i + 1)}
+                            className={`px-4 py-2 rounded-lg border transition ${page === i + 1 ? "bg-indigo-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

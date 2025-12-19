@@ -30,7 +30,7 @@ const ErrorBoundary = () => {
                         Back Home
                     </Link>
                 </div>
-                {process.env.NODE_ENV === "development" && (
+                {import.meta.env.MODE === "development" && (
                     <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl text-left overflow-auto max-h-40 border border-gray-200 dark:border-gray-700">
                         <p className="text-xs font-mono text-red-600 dark:text-red-400">
                             {error?.statusText || error?.message}
