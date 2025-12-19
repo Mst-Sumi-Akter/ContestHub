@@ -55,9 +55,7 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem("authToken");
     if (!storedToken) {
-      // loading is already initialized to false/true correctly but if we are here it is false
-      // NO, if we used !!localStorage.getItem("authToken"), then if it's null, loading is false.
-      // So no need to setLoading(false) here!
+      
       return;
     }
 
@@ -91,7 +89,7 @@ const AuthProvider = ({ children }) => {
     isAdmin: user?.role === "admin",
     isCreator: user?.role === "creator",
 
-    // ✅ provide contestStatsUpdated
+    //  provide contestStatsUpdated
     contestStatsUpdated,
     setContestStatsUpdated,
   };

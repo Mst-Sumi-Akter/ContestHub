@@ -27,23 +27,6 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Database**: MongoDB.
 -   **Authentication**: Firebase (Social), JWT (Session).
 
-## 🚀 Getting Started
 
-1.  Clone the repository.
-2.  Install dependencies:
-    ```bash
-    cd contest-hub-client && npm install
-    cd contest-hub-server && npm install
-    ```
-3.  Set up environment variables in `.env`.
-4.  Run the development servers:
-    ```bash
-    # Client
-    npm run dev
-    # Server
-    npm run start
-    ```
 
-## 📜 License
 
-This project is licensed under the MIT License.

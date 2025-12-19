@@ -50,7 +50,7 @@ const Footer = () => {
           <nav className="flex gap-6 mt-6 md:mt-0">
 
             {/* LinkedIn */}
-            {/* 🔵 LinkedIn */}
+        
             <a
               href="https://www.linkedin.com/in/sumi-akter-cse/"
               target="_blank"
@@ -75,7 +75,7 @@ const Footer = () => {
               </svg>
             </a>
 
-            {/* ⚫ GitHub */}
+            {/*  GitHub */}
             <a
               href="https://github.com/Mst-Sumi-Akter"
               target="_blank"
@@ -106,7 +106,7 @@ const Footer = () => {
               </svg>
             </a>
 
-            {/* 🔵 Facebook */}
+            {/* Facebook */}
             <a
               href="https://www.facebook.com/sumi.akter.cse"
               target="_blank"

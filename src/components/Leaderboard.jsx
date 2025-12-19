@@ -13,12 +13,12 @@ const Leaderboard = () => {
 
         const data = await res.json();
 
-        // শুধুমাত্র normal users দেখাবে, creators/admins বাদ
+        //  normal users 
         const filteredLeaders = data.filter(
           leader => leader.role !== "creator" && leader.role !== "admin"
         );
 
-        // points অনুযায়ী descending sort
+        // points descending sort
         filteredLeaders.sort((a, b) => b.points - a.points);
 
         setLeaders(filteredLeaders);

@@ -39,7 +39,7 @@ const Banner = () => {
           style={{
             backgroundImage: `url(${bannerImages[current]})`,
 
-            /* 🔥 IMAGE SIZE FIX */
+            /*IMAGE SIZE FIX */
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",          // desktop perfect fit
             backgroundPosition: "center",     // balanced crop

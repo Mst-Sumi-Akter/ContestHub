@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-/* eslint-disable no-unused-vars */
+
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FaRocket, FaGlobeAmericas, FaAward, FaBolt } from "react-icons/fa";
 import Loading from "../components/Loading";
@@ -118,7 +118,7 @@ const About = () => {
                         </div>
                     </section>
 
-                    {/* 3. MISSION SECTION WITH CLEAN TYPOGRAPHY */}
+                
                     <section className="container mx-auto px-6 py-20 mb-32">
                         <div className="flex flex-col md:flex-row gap-20 items-center">
                             <motion.div
