@@ -46,7 +46,7 @@ const Footer = () => {
             </p>
           </aside>
 
-          {/* Social Icons */}
+          {/*  Icons */}
           <nav className="flex gap-6 mt-6 md:mt-0">
 
             {/* LinkedIn */}
