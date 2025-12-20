@@ -42,7 +42,7 @@ const Banner = () => {
             /*IMAGE SIZE FIX */
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",          // desktop perfect fit
-            backgroundPosition: "center",     // balanced crop
+            backgroundPosition: "center",     // crop
           }}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
