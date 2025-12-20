@@ -5,7 +5,7 @@ const ContestCard = ({ contest }) => {
   return (
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl overflow-hidden max-w-sm w-full m-4 hover:scale-105 transform transition-all duration-300">
       
-      {/* Contest Image */}
+      {/* Image */}
       <img
         src={contest.image || "https://via.placeholder.com/600x400?text=Contest"}
         alt={contest.title}
