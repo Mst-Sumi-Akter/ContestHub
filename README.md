@@ -11,7 +11,7 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Secure Authentication**: JWT-based login and registration with Google Sign-in support.
 -   **Payment Integration**: (Mock/Simulated) flow for contest registration.
 -   **Dashboard Management**:
-    -   *Creators*: Add/Edit contests, view submissions, declare winners.
+    -   *Creators*: Add, Edit contests, view submissions, declare winners.
     -   *Admins*: Manage users, approve/reject contests.
     -   *Users*: Track participation and winning history.
 -   **Leaderboard**: Dynamic ranking of users based on contest wins.
