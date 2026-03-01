@@ -12,7 +12,7 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Payment Integration**: (Mock/Simulated) flow for contest registration.
 -   **Dashboard Management**:
     -   *Creators*: Add, Edit contests, view submissions, declare winners.
-    -   *Admins*: Manage users, approve/reject contests.
+    -   *Admins*: Manage users, approve or reject contests.
     -   *Users*: Track participation and winning history.
 -   **Leaderboard**: Dynamic ranking of users based on contest wins.
 -   **Responsive Design**: Fully optimized for mobile, tablet, and desktop.
