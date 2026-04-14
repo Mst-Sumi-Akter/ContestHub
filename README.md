@@ -25,7 +25,7 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Frontend**: React, Vite, Tailwind CSS, Framer Motion, React Router, React Hook Form, TanStack Query (optional), Axios.
 -   **Backend**: Node.js, Express.js.
 -   **Database**: MongoDB.
--   **Authentication**: Firebase, JWT (Session).
+-   **Authentication**: Firebase, JWT.
 
 
 
