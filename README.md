@@ -27,5 +27,5 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Database**: MongoDB.
 -   **Authentication**: Firebase, JWT.
 
-
+---------
 
