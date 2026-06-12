@@ -20,6 +20,8 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Notifications**: Toast notifications for all major actions.
 -   **Data Visualization**: Win percentage charts for user profiles.
 
+---- 
+
 ## 🛠️ Tech Stack
 
 -   **Frontend**: React, Vite, Tailwind CSS, Framer Motion, React Router, React Hook Form, TanStack Query (optional), Axios.
@@ -27,5 +29,5 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Database**: MongoDB.
 -   **Authentication**: Firebase, JWT.
 
----------
+----
 
