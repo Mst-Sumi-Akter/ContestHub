@@ -1,6 +1,6 @@
 # Project Name:ContestHub🏆
 
-A modern, platform that allows users to create, discover, participate in, and manage creative contests.
+A modern platform that allows users to create, discover, participate in, and manage creative contests.
 
 🔗 **Live Site URL:** [https://fantastic-cucurucho-3fa98b.netlify.app]
 
@@ -11,7 +11,7 @@ A modern, platform that allows users to create, discover, participate in, and ma
 -   **Secure Authentication**: JWT-based login and registration with Google Sign-in support.
 -   **Payment Integration**: (Mock/Simulated) flow for contest registration.
 -   **Dashboard Management**:
-    -   *Creators*: Add, Edit contests,view submissions, declare winners.
+    -   *Creators*: Add, Edit contests, view submissions, declare winners.
     -   *Admins*: Manage users, approve or reject contests.
     -   *Users*: Track participation and winning history.
 -   **Leaderboard**: Dynamic ranking of users based on contest wins.
@@ -24,7 +24,7 @@ A modern, platform that allows users to create, discover, participate in, and ma
 
 ## 🛠️ Tech Stack
 
--   **Frontend**: React, Vite, Tailwind CSS, Framer Motion, React Router, React Hook Form, HTML,TanStack Query (optional), Axios.
+-   **Frontend**: React, Vite, Tailwind CSS, Framer Motion, React Router, React Hook Form, HTML, TanStack Query (optional), Axios.
 -   **Backend**: Node.js, Express.js.
 -   **Database**: MongoDB.
 -   **Authentication**: Firebase, JWT.
