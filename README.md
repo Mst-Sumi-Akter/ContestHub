@@ -1,6 +1,6 @@
-# Project Name:ContestHub🏆
+# Project Name:Contest Hub🏆
 
-A modern platform that allows users to create, discover, participate in, and manage creative contests.
+A modern platform that allows users to create, discover, participate in, and manage creative contests. It is a user friendly web platform.
 
 🔗 **Live Site URL:** [https://fantastic-cucurucho-3fa98b.netlify.app]
 
